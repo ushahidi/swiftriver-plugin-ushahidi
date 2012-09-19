@@ -7,7 +7,7 @@
 	<div class="alert-message blue" style="display: none;">
 		<p>
 			<strong><?php echo __("No deployments"); ?></strong>
-			<?php echo __('You can add an Usahidi deployment to push drops to by selecting the "Add Deployment" button above'); ?>
+			<?php echo __('You can add an Ushahidi deployment by selecting the "Add Deployment" button above'); ?>
 		</p>
 	</div>
 </div>
@@ -28,6 +28,9 @@
 			<div class="alert-message blue" style="display:none;">
 				<p><?php echo __("The deployment has been successfully saved"); ?></p>
 			</div>
+			<div class="alert-message red" style="display:none;">
+				<p></p>
+			</div>
 
 			<?php echo Form::open(); ?>
 			<article class="container base">
@@ -47,13 +50,13 @@
 					<div class="parameter">
 						<label for="deployment_token_key">
 							<p class="field"><?php echo __("Token Key"); ?></p>
-							<input type="text" naem="deployment_token_key" value="<%= deployment_token_key %>" />
+							<input type="text" name="deployment_token_key" value="<%= deployment_token_key %>" />
 						</label>
 					</div>
 					<div class="parameter">
 						<label for="deployment_token_secret">
 							<p class="field"><?php echo __("Token Secret"); ?></p>
-							<input type="text" naem="deployment_token_secret" value="<%= deployment_token_secret %>" />
+							<input type="text" name="deployment_token_secret" value="<%= deployment_token_secret %>" />
 						</label>
 					</div>
 				</section>
@@ -67,21 +70,24 @@
 </script>
 
 <script type="text/template" id="deployment-list-item-template">
-	<header class="cf">
-		<a href="#" class="remove-large" title="<?php echo __("Delete"); ?>">
-			<span class="icon"></span>
-			<span class="nodisplay"><?php echo __("Remove"); ?></span>
-		</a>
-		<p class="actions">
-			<p class="button-blue button-small edit">
-				<a href="#" title="<?php echo __("Edit the settings for this deployment"); ?>"><?php echo __("Edit"); ?></a>
-			</p>
-		</p>
-		<div class="property-title">
-			<a href="#" class="avatar-wrap"><img src=""></a>
-			<h1><%= deployment_name %></h1>
-		</div>
-	</header>
+	<article class="container base">
+		<header class="cf">
+			<a href="#" class="remove-large" title="<?php echo __("Delete"); ?>">
+				<span class="icon"></span>
+				<span class="nodisplay"><?php echo __("Delete"); ?></span>
+			</a>
+			<div class="actions">
+				<p class="button-blue button-small edit">
+					<a href="#" title="<?php echo __("Edit the settings for this deployment"); ?>">
+						<?php echo __("Edit"); ?>
+					</a>
+				</p>
+			</div>
+			<div class="property-title">
+				<h1><%= deployment_name %></h1>
+			</div>
+		</header>
+	</article>
 </script>
 
 <script type="text/javascript">
@@ -92,55 +98,81 @@ $(function(){
 		model: Deployment,
 		url: "<?php echo $action_url; ?>"
 	});
+
+	// Initialize the deployments listing
+	var deploymentsList = new DeploymentsList();
 	
 	// View for the add deployment dialog
 	var AddDeploymentModal = Backbone.View.extend({
 
 		tagName: "article",
-		
+
 		className: "modal",
-		
+
 		template: _.template($("#add-deployment-dialog-template").html()),
-		
+
 		initialize: function() {
 			this.isSaving = false;			
 		},
-		
+
 		events: {
 			"click p.button-blue a": "save"
 		},
-		
+
 		save: function(e) {
 			if (!this.isSaving) {
 				this.isSaving = true;
+				// Hide any error messages
+				this.$("div.alert-message").hide();
+				
 				this.$("input").attr("readonly", true);
-				
+
 				// Data to be submitted for saving
-				var deploymentData = {
-					deployment_name: this.$("#deployment_name").val(),
-					deployment_url: this.$("#deployment_url").val()
-				};
-				
+				var deploymentData = {};
+				this.$('input[type="text"]').each(function(i, field){
+					deploymentData[$(field).attr("name")]  = $(field).val();
+				});
+
+				// Show loading icon
+				var loadingMessage = window.loading_message.clone();
+				var submitButton = this.$("p.button-blue");
+				this.$("p.button-blue").replaceWith(loadingMessage);
+
 				var context = this;
-				this.model.save(deploymentData, {
+
+				var options = {
 					wait: true,
-					
+
 					success: function(model, response){
 						// Show success message
-						context.$el("div.blue").fadeIn();
-						
+						context.$("div.blue").fadeIn();
+						context.isSaving = false;
+
+						context.$(loadingMessage).replaceWith(submitButton);
+
 						// Trigger a click on the close button
-						context.$("h2.close a").trigger("click");
+						setTimeout(function() { context.$("h2.close a").trigger("click"); }, 1200);
 					},
 					
 					error: function(model, response){
 						// Show error message
-						
+						context.$("div.red p").html(response.responseText);
+						context.$("div.red").fadeIn();
+
 						// Make the input fields readonly
 						context.$("input").removeAttr("readonly");
-						context.isSaving = false;					
+						context.isSaving = false;
+
+						// Show the save button
+						context.$(loadingMessage).replaceWith(submitButton);
 					}
-				});
+				};
+				
+				if (this.model.get("id") === undefined) {
+					deploymentsList.create(deploymentData, options);
+				} else {
+					this.model.save(deploymentData, options);
+				}
 			}
 			return false;
 		},
@@ -155,7 +187,7 @@ $(function(){
 	var DeploymentView = Backbone.View.extend({
 		tagName: "article",
 		
-		className: "container base",
+		className: "item cf",
 		
 		template: _.template($("#deployment-list-item-template").html()),
 		
@@ -165,20 +197,17 @@ $(function(){
 		},
 		
 		confirmDelete: function(e) {
-			new ConfirmationWindow("Remove this deployment?", this.delete, this).show();
+			new ConfirmationWindow("Remove deployment?", this.delete, this).show();
 			return false;
 		},
 		
 		delete: function(e) {
 			var view = this;
-			this.model.destory({
+			this.model.destroy({
 				wait: true,
 				success: function(response) {
 					view.$el.fadeOut("slow");
 				},
-				error: function(repsonse) {
-					
-				}
 			});
 			return false;
 		},
@@ -186,7 +215,7 @@ $(function(){
 		// Show the deployment settings in edit mode
 		edit: function(e) {
 			// Display the dialog
-			var view = new AddDeploymentModel({model: this.model});
+			var view = new AddDeploymentModal({model: this.model});
 			modalShow(view.render().el);
 			return false;
 		},
@@ -196,10 +225,7 @@ $(function(){
 			return this;
 		}
 	});
-	
-	// Initialize the deployments listing
-	var deploymentsList = new DeploymentsList();
-	
+		
 	// The deployments app
 	var DeploymentsControl = Backbone.View.extend({
 
@@ -229,8 +255,8 @@ $(function(){
 		},
 		
 		// Callback to verify whether the deployments collection is empty
-		isEmpty: function() {
-			if (deploymentsList.length) {
+		isEmpty: function(deployment) {
+			if (!deploymentsList.length) {
 				this.$(".alert-message").fadeIn();
 			} else {
 				this.$(".alert-message").fadeOut();

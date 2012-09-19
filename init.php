@@ -1,9 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
-
-/**
- * Initialization for the Ushahidi push plugin
- */
-
+// 
+// Routing setup and registration of event callbacks
+// 
 
 /**
  * Register callback function to be executed when the plugin
@@ -12,7 +10,7 @@
 Swiftriver_Plugins::register('ushahidipush', array('Ushahidipush_Installer', 'install'));
 
 /**
- * Add navigation link
+ * Add navigation link on the user's dashboard
  */
 Swiftriver_Event::add("swiftriver.dashboard.nav", function() {
 	// Get the event data
@@ -23,6 +21,22 @@ Swiftriver_Event::add("swiftriver.dashboard.nav", function() {
 		'url' => '/application/ushahidi',
 		'label' => __('Ushahidi')
 	);
+});
+
+/**
+ * Add navigation link in the bucket settings section
+ */
+Swiftriver_Event::add("swiftriver.bucket.settings.nav", function(){
+	list($base_url, $active) = Swiftriver_Event::$data;
+
+	$active_css = ($active === "ushahidi") ? "active" : "";
+	$link_url = $base_url.'/settings/ushahidi';
+	
+	// Build the HTML for the nav item
+	$nav_html = '<li class="touchcarousel-item %s"><a href="%s">%s</a></li>';
+
+	// Display
+	echo sprintf($nav_html, $active_css, $link_url, __("Ushahidi"));
 });
 
 /**

@@ -8,7 +8,7 @@
  * that is available through the world-wide-web at the following URI:
  * http://www.gnu.org/copyleft/gpl.html
  * @author     Ushahidi Team <team@ushahidi.com> 
- * @package    SwiftRiver - http://github.com/ushahidi/Swiftriver_v2
+ * @package    SwiftRiver - http://github.com/ushahidi/SwiftRiver
  * @category   Models
  * @copyright  Ushahidi - http://www.ushahidi.com
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License v3 (GPLv3) 
@@ -19,15 +19,17 @@ class Model_Deployment extends ORM {
 	 * A deployment belongs to a user
 	 * @var array
 	 */
-	protected $_belongs_to = array('user');
+	protected $_belongs_to = array(
+	    'user' => array()
+	);
 	
 	/**
 	 * One-to-many relationship definition
 	 * @var array
 	 */
 	protected $_has_many = array(
-		'deployment_categories' => array(),
-		'deployment_settings' => array(),
+	    'deployment_categories' => array(),
+	    'deployment_push_settings' => array(),
 	);
 	
 	/**
@@ -53,13 +55,62 @@ class Model_Deployment extends ORM {
 	}
 	
 	/**
-	 * Returns the list of categories for the current deployment
+	 * Overload default saving behaviour
+	 */
+	public function save(Validation $validation = NULL)
+	{
+		// New deployment
+		if ( ! $this->loaded())
+		{
+			// Compatibility check
+			if (Ushahidipush_Core::is_compatible_deployment($this->deployment_url))
+			{
+				$deployment = parent::save();
+				
+				// Get the categories for the deployment
+				Ushahidipush_Core::get_categories($deployment);
+				
+				return $deployment;
+			}
+			else
+			{
+				throw new Ushahidipush_Exception(__("The :name deployment is running a version that is not compatible with this plugin",
+				    array(":name" => $this->deployment_name)));
+			}
+		}
+		else
+		{
+			return parent::save();
+		}
+	}
+
+	/**
+	 * Overloads the default delete behaviour
+	 */
+	public function delete()
+	{
+		// Delete the categories for this deployment
+		DB::delete('deployment_categories')
+		    ->where('deployment_id', '=', $this->id)
+		    ->execute();
+
+		return parent::delete();
+	}
+	
+	/**
+	 * Gets a list of all categories for the current deployment
+	 * 
+	 * @param  bool $parents_only Whether to fetch all or only the parent categories. Default is TRUE
 	 * @return array
 	 */
-	public function get_categories_array()
+	public function get_categories_array($parents_only = TRUE)
 	{
 		$categories = array();
-		foreach ($this->deployment_categories as $category)
+		$deployment_categories = ($parents_only)
+		   ? $this->deployment_categories->where('deployment_parent_category_id', '=', 0)->find_all()
+		   : $this->deployment_categires->find_all();
+
+		foreach ($deployment_categories as $category)
 		{
 			$categories[] = array(
 				'id' => $category->id,
@@ -78,7 +129,28 @@ class Model_Deployment extends ORM {
 	 */
 	public static function add_categories($deployment_id, $categories)
 	{
-		return FALSE;
+		// Columns to insert
+		$columns = array(
+		    'deployment_id',
+		    'deployment_category_id',
+		    'deployment_parent_category_id',
+		    'deployment_category_name'
+		);
+
+		$insert_query = DB::insert('deployment_categories', $columns);
+		foreach ($categories as $entry)
+		{
+			$category = $entry['category'];
+			$insert_query->values(array(
+				'deployment_id' => $deployment_id,
+				'deployment_category_id' => $category['id'],
+				'deployment_parent_category_id' => $category['parent_id'],
+				'deployment_category_name' => $category['title']
+			));
+		}
+
+		// Execute the query
+		$insert_query->execute();
 	}
 	
 	/**
@@ -86,27 +158,49 @@ class Model_Deployment extends ORM {
 	 *
 	 * @return array
 	 */
-	public static function get_deployments_array()
+	public static function get_deployments_array($user_id)
 	{
-		return array();
-		// return ORM::factory('deployment')->find_all()->as_array();
+		$deployments = array();
+		foreach (ORM::factory('deployment')->where('user_id', '=', $user_id)->find_all() as $deployment)
+		{
+			$deployments[] = $deployment->as_array();
+		}
+		
+		return $deployments;
 	}
 	
 	/**
 	 * Given the deployment name, url, token key and secret, creates a new
 	 * entry in the deployments table
 	 *
+	 * @param  int    $user_id ID of the user adding the deployment
 	 * @param  array  $data Properties of the deployment being added
-	 * @return Model_Deployment
+	 * @return mixed  Model_Deployment on success, FALSE otherwise
 	 */
-	public static function add_deployment($data)
+	public static function add_deployment($user_id, $data)
 	{
-		$deployment = new Model_Deployment();
-		$deployment->deployment_name = $data['deployment_name'];
-		$deployment->deployment_url = $data['deployment_url'];
-		$deployment->deployment_token_key = $data['deployment_token_key'];
-		$deployment->deployment_token_secret = $data['deployment_token_secret'];
+		try
+		{
+			$deployment = new Model_Deployment();
+			$deployment->user_id = $user_id;
+			$deployment->deployment_name = $data['deployment_name'];
+			$deployment->deployment_url = $data['deployment_url'];
+			$deployment->deployment_token_key = $data['deployment_token_key'];
+			$deployment->deployment_token_secret = $data['deployment_token_secret'];
+			
+			return $deployment->save();
+		}
+		catch (Database_Exception $e)
+		{
+			// Log the error
+			Kohana::$log->add(Log::ERROR, "Error adding deployment :name for user :id (:error)", array(
+			    ":name" => $data['deployment_name'],
+			    ":id" => $user_id,
+			    ":error" => $e->getMessage()
+			));
 
-		return $deployment->save();
+			return FALSE;
+		}
+		
 	}
 }

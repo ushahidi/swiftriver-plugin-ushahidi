@@ -1,45 +1,73 @@
-<?php echo Form::open(); ?>
-	<article class="container base">
-		<header class="cf">
-			<div class="property-title"><h1><?php echo __("Deployment"); ?></h1></div>
-		</header>
-		<section class="property-parameters">
-			<div class="parameter">
-				<label for="deployment_id">
-					<p class="field"><?php echo __("Ushahidi Deployment"); ?></p>
-					<select name="deployment_id" id="deployment_id"></select>
-				</label>
+<div id="content" class="settings cf ushahidi">
+	<div class="center">
+		<div class="col_12">
+			<?php if (isset($errors)): ?>
+			<div class="alert-message red">
+				<p><strong><?php __("Uh oh!"); ?></strong><?php echo $errros; ?></p>
 			</div>
-		</section>
-	</article>
-	<article class="container base">
-		<header class="cf">
-			<div class="property-title"><h1><?php echo __("Category"); ?></h1></div>
-		</header>
-		<section class="property-parameters">
-			<div class="parameter">
-				<label for="deployment_category_id">
-					<p class="field"><?php echo __("Report Category"); ?></p>
-					<select name="deployent_category_id" id="deployment_category_id"></select>
-				</label>
+			<?php endif; ?>
+			
+			<?php if (isset($success) AND $success): ?>
+			<div class="alert-message blue">
+				<p>
+					<strong><?php echo __("Success"); ?></strong>
+					<?php 
+					    echo __("The settings have been saved! The new settings will be used the next time drops are pushed to the \":name\" deployment.",
+					        array(":name" => $push_settings->deployment->deployment_name));
+					?>
+				</p>
 			</div>
-		</section>
-	</article>
-	<article class="container base">
-		<header class="cf">
-			<div class="property-title"><h1><?php echo __("Drop Count"); ?></h1></div>
-		</header>
-		<section class="property-parameters">
-			<div class="parameter">
-				<label for="push_drop_count">
-					<p class="field"><?php echo __("No. of drops"); ?></p>
-					<input type="text" name="push_drop_count" value="<?php echo $push_drop_count; ?>">
-				</label>
-			</div>
-		</section>
-	</article>
-	<div class="settings-toolbar"></div>
-<?php echo Form::close(); ?>
+			<?php endif; ?>
+			
+			<?php echo Form::open(); ?>
+				<article class="container base">
+					<header class="cf">
+						<div class="property-title"><h1><?php echo __("Deployment"); ?></h1></div>
+					</header>
+					<section class="property-parameters">
+						<div class="parameter">
+							<label for="deployment_id">
+								<p class="field"><?php echo __("Ushahidi Deployment"); ?></p>
+								<select name="deployment_id" id="deployment_id">
+									<option value="0"><?php echo __("--- Select Deployment ---"); ?></option>
+								</select>
+							</label>
+						</div>
+					</section>
+				</article>
+				<article class="container base">
+					<header class="cf">
+						<div class="property-title"><h1><?php echo __("Category"); ?></h1></div>
+					</header>
+					<section class="property-parameters">
+						<div class="parameter">
+							<label for="deployment_category_id">
+								<p class="field"><?php echo __("Report Category"); ?></p>
+								<select name="deployment_category_id" id="deployment_category_id"></select>
+							</label>
+						</div>
+					</section>
+				</article>
+				<article class="container base">
+					<header class="cf">
+						<div class="property-title"><h1><?php echo __("Drop Count"); ?></h1></div>
+					</header>
+					<section class="property-parameters">
+						<div class="parameter">
+							<label for="push_drop_count">
+								<p class="field"><?php echo __("No. of drops"); ?></p>
+								<input type="text" name="push_drop_count" value="<?php echo $push_drop_count; ?>">
+							</label>
+						</div>
+					</section>
+				</article>
+				<div class="save-toolbar">
+					<p class="button-blue"><a href="#" onclick="submitForm(this);"><?php echo __("Save Changes"); ?></a></p>
+				</div>
+			<?php echo Form::close(); ?>
+		</div>
+	</div>
+</div>
 
 <script type="text/template" id="deployment-template">
 	<%= deployment_name %>
@@ -56,13 +84,13 @@ $(function(){
 	var Deployment = Backbone.Model.extend();	
 	var DeploymentList = Backbone.Collection.extend({
 		model: Deployment,
-		url: "<?php echo $fetch_url; ?>"
 	});
 	
 	// Deploymet categories
 	var DeploymentCategory = Backbone.Model.extend();
 	var DeploymentCategoryList = Backbone.Collection.extend({
-		model: DeploymentCategory;	
+		model: DeploymentCategory,
+		url: "<?php echo $fetch_url; ?>"		
 	});
 	
 	// Initialize the deployment listing and the category list
@@ -76,29 +104,47 @@ $(function(){
 		
 		template: _.template($("#deployment-template").html()),
 		
-		render: fuction() {
+		render: function() {
 			this.$el.html(this.template(this.model.toJSON()));
 			this.$el.attr("value", this.model.get("id"));
+			
+			// Select the current deployment for the push
+			<?php if ($push_settings->loaded()): ?>
+			var activeDeploymentID = <?php echo $push_settings->deployment_id; ?>;
+			if (activeDeploymentID == this.model.get("id")) {
+				this.$el.attr("selected", "selected");
+			}
+			<?php endif; ?>
 			return this;
 		}
-		
+
 	});
 	
 	// Renders a single category item
-	var DeploymentCategoryView = Backbone.View.extend({
+	var DeploymentCategoryView = Backbone.View.extend({		
 		tagName: "option",
 		
 		template: _.template($("#deployment-category-template").html()),
 		
 		render: function() {
 			this.$el.html(this.template(this.model.toJSON()));
-			this.$el.attr("value", this.model.get("deployment_category_id"));
+			this.$el.attr("value", this.model.get("id"));
+			
+			// Select the current category for the push
+			<?php if ($push_settings->loaded()): ?>
+			var activeCategoryID = <?php echo $push_settings->deployment_category_id; ?>;
+			if (activeCategoryID == this.model.get("id")) {
+				this.$el.attr("selected", "selected");
+			}
+			<?php endif; ?>
+			
 			return this;
 		}
 	});
 
 	// Initializes the controls + data for this view
 	var DeploymentPushView = Backbone.View.extend({
+		el: "div.ushahidi",
 		
 		initialize: function() {
 			deploymentsList.on("add", this.addDeployment, this);
@@ -114,7 +160,7 @@ $(function(){
 		
 		addDeployment: function(deployment) {
 			var view = new DeploymentView({model: deployment});
-			$("#deployment_id").append(view.render().el);
+			this.$("#deployment_id").append(view.render().el);
 		},
 		
 		addDeployments: function() {
@@ -123,20 +169,31 @@ $(function(){
 		
 		addDeploymentCategory: function(category) {
 			var view = new DeploymentCategoryView({model: category});
-			$("#deployment_category_id").append(view.render().el);
+			this.$("#deployment_category_id").append(view.render().el);
 		},
 		
 		addDeploymentCategories: function() {
 			// Clear the current list of categories
-			$("#deployment_category_id").html("");
-			if (deploymentCategories.length() > 0) {
+			this.clearCategories();
+			if (deploymentCategories.length > 0) {
 				deploymentCategories.each(this.addDeploymentCategory, this);
 			}
 		},
 		
+		// Clears the categories dropdown
+		clearCategories: function() {
+			this.$("#deployment_category_id").html("");
+		},
+		
 		// Callback for the onchange event against the deployment list
 		fetchCategories: function(e) {
-			deploymentCategories.fetch();
+			var deploymentID = $(e.currentTarget).val();
+			if (deploymentID > 0) {
+				deploymentCategories.fetch({data: {id: deploymentID}});
+			} else {
+				this.clearCategories();
+			}
+			return false;
 		},
 	});
 	

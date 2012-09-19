@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `deployment_categories` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `deployment_id` bigint(20) NOT NULL,
   `deployment_category_id` int(11) NOT NULL COMMENT 'ID of the category  on the deployment',
-  `deployment_parent_id` int(11) NOT NULL DEFAULT 0 COMMENT 'Parent ID of the category',
+  `deployment_parent_category_id` int(11) NOT NULL DEFAULT 0 COMMENT 'Parent ID of the category',
   `deployment_category_name` varchar(150) NOT NULL COMMENT 'Name of the category',
   PRIMARY KEY (`id`),
   UNIQUE KEY `un_deployment_category` (`deployment_id`,`deployment_category_id`)
