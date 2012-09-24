@@ -50,5 +50,5 @@ class Model_Deployment_Push_Setting extends ORM {
 		    ->where('bucket_id','=', $bucket_id)
 		    ->find();
 	}
-	
+
 }

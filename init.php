@@ -39,6 +39,12 @@ Swiftriver_Event::add("swiftriver.bucket.settings.nav", function(){
 	echo sprintf($nav_html, $active_css, $link_url, __("Ushahidi"));
 });
 
+// Add drop to the push log
+Swiftriver_Event::add('swiftriver.bucket.droplet.add', array('Model_Deployment_Push_Log', 'add_entry'));
+
+// Remove drop from the push log
+Switriver_Event::add('swiftriver.bucket.droplet.remove', array('Model_Deployment_Push_Log', 'remove_entry'));
+
 /**
  * Route for setting up ushahidi deployments
  */
