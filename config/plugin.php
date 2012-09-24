@@ -8,15 +8,15 @@
  * on Ushahidi.
  *
  * PHP Version 5.3+
- * LICENSE: This source file is subject to GPLv3 license 
+ * LICENSE: This source file is subject to the AGPL license 
  * that is available through the world-wide-web at the following URI:
- * http://www.gnu.org/copyleft/gpl.html
+ * http://www.gnu.org/licenses/agpl.html
  *
  * @author     Ushahidi Team
  * @package    SwiftRiver - https://github.com/ushahidi/SwiftRiver
  * @category   Plugins
  * @copyright  Ushahidi Inc - http://www.ushahidi.com
- * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License v3 (GPLv3)
+ * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
 return array(
 	'ushahidipush' => array(
