@@ -13,7 +13,7 @@
  * @copyright  Ushahidi - http://www.ushahidi.com
  * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
-class Ushahidipush_Core {
+class Ushahidi_Core {
 
 	/**
 	 * Checks whether the deployment referenced by the specified url
@@ -25,13 +25,13 @@ class Ushahidipush_Core {
 	public static function is_compatible_deployment($deployment_url)
 	{
 		// Get the platform version
-		$min_version = Kohana::$config->load('ushahidipush.min_version');
+		$min_version = Kohana::$config->load('ushahidi.min_version');
 		
 		// Endpoint for the version check
-		$version_endpoint = Kohana::$config->load('ushahidipush.endpoints.version_check');
+		$version_endpoint = Kohana::$config->load('ushahidi.endpoints.version_check');
 		
 		// Get the request url
-		$request_url = self::_get_request_url($deployment_url, $version_endpoint);
+		$request_url = self::get_request_url($deployment_url, $version_endpoint);
 		
 		// Send the request
 		$api_response = self::_api_request($request_url);
@@ -62,10 +62,10 @@ class Ushahidipush_Core {
 	public static function get_categories($deployment)
 	{
 		// Get the endpoint for fetching the categories
-		$categories_endpoint = Kohana::$config->load('ushahidipush.endpoints.categories');
+		$categories_endpoint = Kohana::$config->load('ushahidi.endpoints.categories');
 
 		// Get the request url
-		$request_url = self::_get_request_url($deployment->deployment_url, $categories_endpoint);
+		$request_url = self::get_request_url($deployment->deployment_url, $categories_endpoint);
 		
 		// Execute the request and fetch the response
 		$api_response = self::_api_request($request_url);
@@ -92,7 +92,7 @@ class Ushahidipush_Core {
 	 * @param  string  $endpoint Segment to be appended to the deployment url
 	 * @return string
 	 */
-	private static function _get_request_url($deployment_url, $endpoint)
+	public static function get_request_url($deployment_url, $endpoint)
 	{
 		$request_url = $deployment_url;
 		

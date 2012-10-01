@@ -50,13 +50,13 @@
 					<div class="parameter">
 						<label for="deployment_token_key">
 							<p class="field"><?php echo __("Token Key"); ?></p>
-							<input type="text" name="deployment_token_key" value="<%= deployment_token_key %>" />
+							<input type="text" name="token_key" value="<%= token_key %>" />
 						</label>
 					</div>
 					<div class="parameter">
 						<label for="deployment_token_secret">
 							<p class="field"><?php echo __("Token Secret"); ?></p>
-							<input type="text" name="deployment_token_secret" value="<%= deployment_token_secret %>" />
+							<input type="text" name="token_secret" value="<%= token_secret %>" />
 						</label>
 					</div>
 				</section>

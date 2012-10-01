@@ -7,7 +7,7 @@
  * Register callback function to be executed when the plugin
  * is activated for the first time
  */
-Swiftriver_Plugins::register('ushahidipush', array('Ushahidipush_Installer', 'install'));
+Swiftriver_Plugins::register('ushahidipush', array('Ushahidi_Installer', 'install'));
 
 /**
  * Add navigation link on the user's dashboard
@@ -44,6 +44,7 @@ Swiftriver_Event::add('swiftriver.bucket.droplet.add', array('Model_Deployment_P
 
 // Remove drop from the push log
 Switriver_Event::add('swiftriver.bucket.droplet.remove', array('Model_Deployment_Push_Log', 'remove_entry'));
+
 
 /**
  * Route for setting up ushahidi deployments

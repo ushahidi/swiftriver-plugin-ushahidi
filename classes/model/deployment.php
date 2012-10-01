@@ -16,20 +16,19 @@
 class Model_Deployment extends ORM {
 	
 	/**
-	 * A deployment belongs to a user
-	 * @var array
-	 */
-	protected $_belongs_to = array(
-	    'user' => array()
-	);
-	
-	/**
 	 * One-to-many relationship definition
 	 * @var array
 	 */
 	protected $_has_many = array(
 	    'deployment_categories' => array(),
 	    'deployment_push_settings' => array(),
+	
+		// A deployment can have one or more users
+		'users' => array(
+			'model' => 'user',
+			'through' => 'deployment_users',
+			'far_key' => 'user_id'
+		)
 	);
 	
 	/**
@@ -46,11 +45,7 @@ class Model_Deployment extends ORM {
 			'deployment_url' => array(
 				array('not_empty'),
 				array('url')
-			),
-			
-			'deployment_token_key' => array(array('not_empty')),
-			
-			'deployment_token_secret' => array(array('not_empty'))
+			)			
 		);
 	}
 	
@@ -63,18 +58,18 @@ class Model_Deployment extends ORM {
 		if ( ! $this->loaded())
 		{
 			// Compatibility check
-			if (Ushahidipush_Core::is_compatible_deployment($this->deployment_url))
+			if (Ushahidi_Core::is_compatible_deployment($this->deployment_url))
 			{
 				$deployment = parent::save();
 				
 				// Get the categories for the deployment
-				Ushahidipush_Core::get_categories($deployment);
+				Ushahidi_Core::get_categories($deployment);
 				
 				return $deployment;
 			}
 			else
 			{
-				throw new Ushahidipush_Exception(__("The :name deployment is running a version that is not compatible with this plugin",
+				throw new Ushahidi_Exception(__("The :name deployment is running a version that is not compatible with this plugin",
 				    array(":name" => $this->deployment_name)));
 			}
 		}
@@ -85,16 +80,21 @@ class Model_Deployment extends ORM {
 	}
 
 	/**
-	 * Overloads the default delete behaviour
+	 * Overrides the default delete behaviour
 	 */
 	public function delete()
 	{
 		// Delete the categories for this deployment
-		DB::delete('deployment_categories')
-		    ->where('deployment_id', '=', $this->id)
-		    ->execute();
+		if ($this->users->count_all() == 0)
+		{
+			DB::delete('deployment_categories')
+			    ->where('deployment_id', '=', $this->id)
+			    ->execute();
 
-		return parent::delete();
+			return parent::delete();
+		}
+		
+		return FALSE;
 	}
 	
 	/**
@@ -108,7 +108,7 @@ class Model_Deployment extends ORM {
 		$categories = array();
 		$deployment_categories = ($parents_only)
 		   ? $this->deployment_categories->where('deployment_parent_category_id', '=', 0)->find_all()
-		   : $this->deployment_categires->find_all();
+		   : $this->deployment_categories->find_all();
 
 		foreach ($deployment_categories as $category)
 		{
@@ -161,9 +161,15 @@ class Model_Deployment extends ORM {
 	public static function get_deployments_array($user_id)
 	{
 		$deployments = array();
-		foreach (ORM::factory('deployment')->where('user_id', '=', $user_id)->find_all() as $deployment)
+		foreach (ORM::factory('deployment_user')->where('user_id', '=', $user_id)->find_all() as $entry)
 		{
-			$deployments[] = $deployment->as_array();
+			$deployments[] = array(
+				"id" => $entry->deployment_id,
+				"deployment_name" => $entry->deployment_name,
+				"deployment_url" => $entry->deployment->deployment_url,
+				"token_key" => $entry->token_key,
+				"token_scret" => $entry->token_secret
+			)
 		}
 		
 		return $deployments;
@@ -181,14 +187,25 @@ class Model_Deployment extends ORM {
 	{
 		try
 		{
-			$deployment = new Model_Deployment();
-			$deployment->user_id = $user_id;
-			$deployment->deployment_name = $data['deployment_name'];
-			$deployment->deployment_url = $data['deployment_url'];
-			$deployment->deployment_token_key = $data['deployment_token_key'];
-			$deployment->deployment_token_secret = $data['deployment_token_secret'];
+			$deployment = self::get_deployment_by_url($data['deployment_url']);
+			if ( ! $deployment->loaded())
+			{
+				$deployment = new Model_Deployment();
+				$deployment->user_id = $user_id;
+				$deployment->deployment_url = $data['deployment_url'];
+				$deployment->save();
+			}
 			
-			return $deployment->save();
+			// Add the user entry for the deployment
+			$user_deployment = new Model_Deployment_User();
+			$user_deployment->deployment_id = $deployment->id;
+			$user_deployment->user_id = $user_id;
+			$user_deployment->deployment_name = $data['deployment_name'];
+			$user_deployment->token_key = $data['token_key'];
+			$user_deployment->token_secret = $data['token_secret'];
+			$user_deployment->save();
+			
+			return $deployment;
 		}
 		catch (Database_Exception $e)
 		{
@@ -200,7 +217,29 @@ class Model_Deployment extends ORM {
 			));
 
 			return FALSE;
-		}
+		}		
+	}
+	
+	/**
+	 * Gets a deployment using its url. Each deployment has a unique URL
+	 *
+	 * @param  string $url URL of the deployment
+	 * @return Model_Deployment
+	 */
+	public static function get_deployment_by_url($url)
+	{
+		return ORM::factory('deployment')->where('deployment_url', '=', $url)->find();
+	}
+	
+	/**
+	 * Gets the full URL of the endpoint to be used for posting drops
+	 *
+	 * @return string
+	 */
+	public function get_drop_posting_url()
+	{
+		$drops_endpoint = Kohana::$config->load("ushahidi.endpoints.drops");
 		
+		return Ushahidi_Core::get_request_url($this->deployment_url, $drops_endpoint);
 	}
 }

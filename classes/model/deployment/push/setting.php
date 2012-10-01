@@ -50,5 +50,30 @@ class Model_Deployment_Push_Setting extends ORM {
 		    ->where('bucket_id','=', $bucket_id)
 		    ->find();
 	}
+	
+	/**
+	 * Gets the buckets that are ready to have their drops pushed to Ushahidi.
+	 * These are buckets with the following property:
+	 *      pending_drop_count >= push_drop_count
+	 *
+ 	 * i.e. the no. of pending drops is equal to or more than the configured
+	 * batch size for pushing drops to a deployment
+	 * 
+	 * @return array
+	 */
+	public static function get_eligible_buckets()
+	{
+		$bucket_ids = array();
+		$eligible_buckets = ORM::factory('deployment_push_setting')
+		    ->where('pending_drop_count', '>=', 'push_drop_count')
+		    ->find_all();
+		
+		foreach ($eligible_buckets as $entry)
+		{
+			$buckets[] = $entry->bucket_id;
+		}
+		
+		return $bucket_ids;
+	}
 
 }

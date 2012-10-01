@@ -13,7 +13,7 @@
  * @copyright  Ushahidi - http://www.ushahidi.com
  * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
-class Ushahidipush_Installer {
+class Ushahidi_Installer {
 
 	/**
 	 * Executes the SQL script to create schema objects used by
@@ -24,7 +24,7 @@ class Ushahidipush_Installer {
 	public static function install()
 	{
 		// Check if the file exists
-		if (($install_script = Kohana::find_file('install', 'ushahidipush', 'sql')) !== FALSE)
+		if (($install_script = Kohana::find_file('install', 'ushahidi', 'sql')) !== FALSE)
 		{
 			Kohana::$log->add(Log::INFO, "Found setup SQL script - :install_script",
 			    array(":install_script" => $install_script));

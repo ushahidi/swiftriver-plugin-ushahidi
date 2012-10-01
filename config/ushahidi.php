@@ -25,6 +25,9 @@ return array(
 		'version_check' => "api?task=version",
 		
 		// Categories API
-		'categories' => 'api?task=categories',		
+		'categories' => 'api?task=categories',	
+		
+		// 	Drops posting API
+		'drops' => 'swiftriver/drops'
 	)
 );

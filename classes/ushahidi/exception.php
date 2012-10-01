@@ -1,7 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct script access');
 
 /**
- * Ushahidipush exception
+ * Ushahidi exception
  *
  * PHP version 5
  * LICENSE: This source file is subject to the AGPL license 
@@ -11,8 +11,8 @@
  * @package     SwiftRiver - http://github.com/ushahidi/SwiftRiver
  * @subpackage  Exceptions
  * @copyright   Ushahidi - http://www.ushahidi.com
- * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
+ * @license     http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
-class Ushahidipush_Exception extends Kohana_Exception {
+class Ushahidi_Exception extends Kohana_Exception {
 	
 }

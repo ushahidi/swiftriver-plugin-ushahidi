@@ -3,16 +3,25 @@
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `deployments`(
 	`id` BIGINT(20) NOT NULL AUTO_INCREMENT,
-	`user_id` BIGINT(20) NOT NULL,
-	`deployment_name` VARCHAR(80) NOT NULL COMMENT 'Name of the deployment',
 	`deployment_url` VARCHAR(200) NOT NULL COMMENT 'URL of the Ushahidi deployment',
 	`deployment_date_add` TIMESTAMP DEFAULT '0000-00-00 00:00:00',
-	`deployment_token_key` VARCHAR(255) NOT NULL COMMENT 'Token key for the Ushahidi deployment',
-	`deployment_token_secret` VARCHAR(255) NOT NULL COMMENT 'Token secret for the Ushahidi deployment',
-	`deployment_active` TINYINT(1) NOT NULL DEFAULT 1,
 	PRIMARY KEY (`id`),
-	UNIQUE KEY `un_user_deployment` (`user_id`, `deployment_url`),
+	UNIQUE KEY `un_deployment_url` (`deployment_url`),
 	KEY `user_id_idx` (`user_id`)
+) ENGINE=InnoDB CHARSET=utf8;
+
+-- -----------------------------------------------------
+-- Table `deployment_users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `deployment_users`(
+	`id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+	`user_id` BIGINT(20) NOT NULL,
+	`deployment_id` BIGINT(20) NOT NULL,
+	`deployment_name` VARCHAR(80) NOT NULL COMMENT 'Name of the deployment',
+	`token_key` VARCHAR(255) NOT NULL COMMENT 'Token key for the Ushahidi deployment',
+	`token_secret` VARCHAR(255) NOT NULL COMMENT 'Token secret for the Ushahidi deployment',
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `un_deployment_user`(`user_id`, `deployment_id`)
 ) ENGINE=InnoDB CHARSET=utf8;
 
 -- -----------------------------------------------------
@@ -52,6 +61,7 @@ CREATE TABLE IF NOT EXISTS `deployment_push_settings` (
   `bucket_id` bigint(20) NOT NULL,
   `deployment_category_id` bigint(20) NOT NULL COMMENT 'Category to push to',
   `push_drop_count` int(11) DEFAULT 20 COMMENT 'Batch size for pushing drops to the deployment. Default is 20',
+  `pending_drop_count` int(11) DEFUALT 0 'Number of drops that are yet to be pushed to the deployment',
   `push_active` tinyint(1) DEFAULT 1 COMMENT 'Whether the push is active or inactive. Default is 1 (active)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `un_bucket_deployment_category` (`bucket_id`,`deployment_category_id`),

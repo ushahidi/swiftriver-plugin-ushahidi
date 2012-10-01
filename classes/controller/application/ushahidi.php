@@ -1,5 +1,4 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
-
 /**
  * This controller allows a user to add ushahidi deployments to which
  * they would like to push drops to
@@ -14,7 +13,6 @@
  * @copyright  Ushahidi - http://www.ushahidi.com
  * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
-
 class Controller_Application_Ushahidi extends Controller_User {
 	
 	public function before()
@@ -76,7 +74,7 @@ class Controller_Application_Ushahidi extends Controller_User {
 					echo $error_message;
 				}
 			}
-			catch (Ushahidipush_Exception $e)
+			catch (Ushahidi_Exception $e)
 			{
 				$this->response->status(400);
 				echo $e->getMessage();
@@ -106,6 +104,7 @@ class Controller_Application_Ushahidi extends Controller_User {
 			$deployment_orm = ORM::factory('deployment', $deployment_id);
 			if ($deployment_orm->loaded())
 			{
+				$deployment_orm->remove('users', $this->user);
 				$deployment_orm->delete();
 			}
 			break;
