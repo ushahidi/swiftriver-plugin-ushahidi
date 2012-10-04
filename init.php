@@ -7,7 +7,7 @@
  * Register callback function to be executed when the plugin
  * is activated for the first time
  */
-Swiftriver_Plugins::register('ushahidipush', array('Ushahidi_Installer', 'install'));
+Swiftriver_Plugins::register('ushahidi', array('Ushahidi_Installer', 'install'));
 
 /**
  * Add navigation link on the user's dashboard
@@ -43,7 +43,7 @@ Swiftriver_Event::add("swiftriver.bucket.settings.nav", function(){
 Swiftriver_Event::add('swiftriver.bucket.droplet.add', array('Model_Deployment_Push_Log', 'add_entry'));
 
 // Remove drop from the push log
-Switriver_Event::add('swiftriver.bucket.droplet.remove', array('Model_Deployment_Push_Log', 'remove_entry'));
+Swiftriver_Event::add('swiftriver.bucket.droplet.remove', array('Model_Deployment_Push_Log', 'remove_entry'));
 
 
 /**
@@ -58,3 +58,13 @@ Route::set('ushahidi_deployments', '<account>/<directory>/ushahidi(/<action>(/<i
 	    'action' => 'index',
 	    'id' => '\d+'
 	));
+
+/**
+ * Route alias for the drops poster
+ */	
+Route::set('post_to_ushahidi', 'post2ushahidi')
+    ->defaults(array(
+        'directory' => 'ushahidi',
+        'controller' => 'poster',
+        'action' => 'run'
+    ));

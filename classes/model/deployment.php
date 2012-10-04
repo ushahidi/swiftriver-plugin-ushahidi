@@ -32,15 +32,21 @@ class Model_Deployment extends ORM {
 	);
 	
 	/**
+	 * Date column to be updated when a new record is created
+	 * @var array
+	 */
+	protected $_created_column = array(
+		'column' => 'deployment_date_add',
+		'format' => 'Y-m-d H:i:s'
+	);
+	
+	/**
 	 * Validation rules for this model
 	 * @return array
 	 */
 	public function rules()
 	{
 		return array(
-			// Deployment name must be specified
-			'deployment_name' => array(array('not_empty')),
-			
 			// URL of the deployment must be valid
 			'deployment_url' => array(
 				array('not_empty'),
@@ -69,8 +75,8 @@ class Model_Deployment extends ORM {
 			}
 			else
 			{
-				throw new Ushahidi_Exception(__("The :name deployment is running a version that is not compatible with this plugin",
-				    array(":name" => $this->deployment_name)));
+				throw new Ushahidi_Exception(__("SwiftRiver cannot push drops to the :name deployment",
+				    array(":name" => $this->deployment_url)));
 			}
 		}
 		else
@@ -164,12 +170,12 @@ class Model_Deployment extends ORM {
 		foreach (ORM::factory('deployment_user')->where('user_id', '=', $user_id)->find_all() as $entry)
 		{
 			$deployments[] = array(
-				"id" => $entry->deployment_id,
+				"id" => $entry->id,
 				"deployment_name" => $entry->deployment_name,
 				"deployment_url" => $entry->deployment->deployment_url,
-				"token_key" => $entry->token_key,
-				"token_scret" => $entry->token_secret
-			)
+				"client_id" => $entry->client_id,
+				"client_secret" => $entry->client_secret
+			);
 		}
 		
 		return $deployments;
@@ -181,7 +187,7 @@ class Model_Deployment extends ORM {
 	 *
 	 * @param  int    $user_id ID of the user adding the deployment
 	 * @param  array  $data Properties of the deployment being added
-	 * @return mixed  Model_Deployment on success, FALSE otherwise
+	 * @return mixed  Model_Deployment_User on success, FALSE otherwise
 	 */
 	public static function add_deployment($user_id, $data)
 	{
@@ -191,7 +197,6 @@ class Model_Deployment extends ORM {
 			if ( ! $deployment->loaded())
 			{
 				$deployment = new Model_Deployment();
-				$deployment->user_id = $user_id;
 				$deployment->deployment_url = $data['deployment_url'];
 				$deployment->save();
 			}
@@ -201,11 +206,11 @@ class Model_Deployment extends ORM {
 			$user_deployment->deployment_id = $deployment->id;
 			$user_deployment->user_id = $user_id;
 			$user_deployment->deployment_name = $data['deployment_name'];
-			$user_deployment->token_key = $data['token_key'];
-			$user_deployment->token_secret = $data['token_secret'];
+			$user_deployment->client_id = $data['client_id'];
+			$user_deployment->client_secret = $data['client_secret'];
 			$user_deployment->save();
 			
-			return $deployment;
+			return $user_deployment;
 		}
 		catch (Database_Exception $e)
 		{

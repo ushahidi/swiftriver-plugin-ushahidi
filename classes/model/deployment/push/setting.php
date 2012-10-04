@@ -67,10 +67,9 @@ class Model_Deployment_Push_Setting extends ORM {
 		$eligible_buckets = ORM::factory('deployment_push_setting')
 		    ->where('pending_drop_count', '>=', 'push_drop_count')
 		    ->find_all();
-		
 		foreach ($eligible_buckets as $entry)
 		{
-			$buckets[] = $entry->bucket_id;
+			$bucket_ids[] = $entry->bucket_id;
 		}
 		
 		return $bucket_ids;

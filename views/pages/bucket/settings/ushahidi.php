@@ -12,8 +12,8 @@
 				<p>
 					<strong><?php echo __("Success"); ?></strong>
 					<?php 
-					    echo __("The settings have been saved! The new settings will be used the next time drops are pushed to the \":name\" deployment.",
-					        array(":name" => $push_settings->deployment->deployment_name));
+					    echo __("The settings have been saved! The new settings will be used the next time drops are pushed to :name",
+					        array(":name" => $push_settings->deployment->deployment_url));
 					?>
 				</p>
 			</div>

@@ -28,6 +28,6 @@ return array(
 		'categories' => 'api?task=categories',	
 		
 		// 	Drops posting API
-		'drops' => 'swiftriver/drops'
+		'drops' => 'api/swiftriver/drops'
 	)
 );

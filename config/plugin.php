@@ -19,8 +19,8 @@
  * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
 return array(
-	'ushahidipush' => array(
-		'name' => 'Ushahidi Push',
+	'ushahidi' => array(
+		'name' => 'Ushahidi',
 		'description' => 'Pushes a SwiftRiver bucket to an Ushahidi deployment',
 		'author' => 'Emmanuel Kala',
 		'email' => 'emmanuel@ushahidi.com',

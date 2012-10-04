@@ -1,0 +1,19 @@
+<!--
+	This is an example phpunit.xml file to get you started
+	Copy it to the application/tests, update the relative paths and rename to phpunit.xml
+	Then to run tests cd into it's directory and just run
+		phpunit
+	(it'll automatically use any phpunit.xml file in the current directory)
+    
+    NOTE: In order for this plugin's tests to run, the path for the boostrap file 
+    must be absolute.
+    
+	Any options you specify when calling phpunit will override the ones in here
+-->
+<phpunit colors="true" bootstrap="/path/to/SwifRiver/modules/unittest/bootstrap.php">
+	<testsuites>
+		<testsuite name="SwiftRiver Tests">
+			<file>/path/to/SwiftRiver/modules/unittest/tests.php</file>
+		</testsuite>
+	</testsuites>
+</phpunit>

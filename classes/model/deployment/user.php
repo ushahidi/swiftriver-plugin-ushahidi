@@ -33,8 +33,8 @@ class Model_Deployment_User extends ORM {
 	{
 		return array(
 		    'deployment_name' => array(array('not_empty')),
-		    'token_key' => array(array('not_empty')),
-		    'token_secret' => array(array('not_empty'))		
+		    'client_id' => array(array('not_empty')),
+		    'client_secret' => array(array('not_empty'))		
 		);
 	}
 }

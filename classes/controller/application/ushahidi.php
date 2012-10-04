@@ -58,10 +58,16 @@ class Controller_Application_Ushahidi extends Controller_User {
 			$post_data = json_decode($this->request->body(), TRUE);
 			try
 			{
-				$deployment = Model_Deployment::add_deployment($this->user->id, $post_data);
-				if ($deployment)
+				$user_deployment = Model_Deployment::add_deployment($this->user->id, $post_data);
+				if ($user_deployment)
 				{
-					echo json_encode($deployment->as_array());
+					echo json_encode(array(
+						"id" => $user_deployment->id,
+						"deployment_name" => $user_deployment->deployment_name,
+						"deployment_url" => $user_deployment->deployment->deployment_url,
+						"client_id" => $user_deployment->client_id,
+						"client_secret" => $user_deployment->client_secret
+					));
 				}
 				else
 				{
@@ -83,20 +89,20 @@ class Controller_Application_Ushahidi extends Controller_User {
 			
 			case "PUT":
 			// Update existing deployment
-			$deployment_id = $this->request->param('id', 0);
-			$deployment_orm = ORM::factory('deployment', $deployment_id);
-			if ( ! $deployment_orm->loaded())
+			$entry_id = intval($this->request->param('id', 0));
+
+			$user_deployment = ORM::factory('deployment_user', $entry_id);
+			if ( ! $user_deployment->loaded())
 			{
 				throw HTTP_Exception_404(__("The specified deployment does not exist"));
 			}
 			
 			$update_data = json_decode($this->request->body());
 
-			$deployment_orm->deployment_name = $update_data->deployment_name;
-			$deployment_orm->deployment_url = $update_data->deployment_url;
-			$deployment_orm->deployment_token_key = $update_data->deployment_token_key;
-			$deployment_orm->deployment_token_secret = $update_data->deployment_token_secret;
-			$deployment_orm->update();
+			$user_deployment->deployment_name = $update_data->deployment_name;
+			$user_deployment->client_id = $update_data->client_id;
+			$user_deployment->client_secret = $update_data->client_secret;
+			$user_deployment->update();
 			break;
 			
 			case "DELETE":

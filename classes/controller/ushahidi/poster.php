@@ -23,14 +23,14 @@ class Controller_Ushahidi_Poster extends Controller {
 		}
 		
 		Kohana::$log->add(Log::INFO, "Preparing to execute bucket push");
-		
+
 		// Get the buckets that are ready to post drops to Ushahidi
 		$bucket_ids = Model_Deployment_Push_Setting::get_eligible_buckets();
 
 		// If no buckets were found, exit
 		if (empty($bucket_ids))
 		{
-			Kohana::$log->add(Log::INFO, "There are no buckets to push to Ushahidi. Exiting...")
+			Kohana::$log->add(Log::INFO, "There are no buckets to push to Ushahidi. Exiting...");
 			exit;
 		}
 
@@ -40,19 +40,30 @@ class Controller_Ushahidi_Poster extends Controller {
 		// Get the drops to push - only those with place tags
 		$pending_drops = Model_Deployment_Push_Log::get_pending_drops($bucket_ids);
 
+		if ( ! count($pending_drops))
+		{
+			Kohana::$log->add(Log::INFO, "No pending drops found");
+			exit;
+		}
 		// Get the push URLs and client ID for each push target
 		$push_targets = $this->_get_push_targets(array_keys($pending_drops));
 		
-		// Store for api responses for endpoint
-		$api_responses = array();
+		// Store for the buckets succesfully pushed to Ushahidi
+		$posted_buckets = array();
 
 		// Push each bucket to its respective deployment
-		foreach ($push_target as $bucket_id => $metadata)
+		foreach ($push_targets as $bucket_id => $metadata)
 		{
 			// Get the payload for each push target
 			$drops_payload = json_encode($pending_drops[$bucket_id]['drops']);
-			
 			$checksum = hash_hmac("sha256", $drops_payload, $metadata['client_secret']);
+
+			Kohana::$log->add(Log::DEBUG, "Checksum for bucket :id with :num drops - :checksum", 
+			    array(
+				    ":id" => $bucket_id,
+				    ":checksum" => $checksum,
+			        ":num" => count($pending_drops[$bucket_id]['drops'])
+			));
 
 			$payload = array(
 			    "drops" => $drops_payload,
@@ -64,13 +75,63 @@ class Controller_Ushahidi_Poster extends Controller {
 			$response = $this->_post_drops($metadata['url'], $payload);
 			
 			// Store the response
-			$api_reponses[$bucket_id] = $response;
+			if ($response["status"] === "OK")
+			{
+				$posted_buckets[] = $bucket_id;
+				Kohana::$log->add(Log::INFO, "Drops from bucket :id successfuly posted",
+				   array(":id" => $bucket_id));
+			}
 		}
 		
-		// TODO: Update the push log for each of the buckets in $api_responses
-		// Also upate the pending drop count
-	}
+		// Check if any buckets were posted
+		if ( ! count($posted_buckets))
+		{
+			Kohana::$log->add(Log::INFO, "An error occured. No buckets were posted to the deployments");
+			exit;
+		}
+
+		// 
+		// Update the push log and pending drop count for each of the buckets
+		// in $posted_buckets
+		// 
+		$push_log_query = array();
+		$drop_count_query = array();
+		foreach ($posted_buckets as $posted_bucket)
+		{
+			// Queries to update the pending drop count
+			$bucket_drop_count = count($pending_drops[$posted_bucket]['drops']);
+			$drop_count_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `posted_drop_count`",
+			    $posted_bucket, $bucket_drop_count);
+
+			// Queries to update the push log
+			foreach ($pending_drops[$posted_bucket]['drops'] as $drop)
+			{
+				$push_log_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `droplet_id`", $posted_bucket, $drop['id']);
+			}
+		}
+		
+		// Update the push log
+		$log_update_query = "UPDATE `deployment_push_logs` AS a JOIN (%s) AS b "
+		    . "ON b.bucket_id = a.bucket_id "
+		    . "SET a.droplet_push_status = 1, "
+		    . "a.droplet_date_push = '%s' "
+		    . "AND a.droplet_id = b.droplet_id";
+
+		$log_update_query = sprintf($log_update_query, implode("UNION ALL ", $push_log_query), gmdate("Y-m-d H:i:s"));
+		DB::query(Database::UPDATE, $log_update_query)->execute();
+
+		// Update the pending drop count
+		$count_update_query = "UPDATE `deployment_push_settings` AS a JOIN (%s) AS b "
+		    . "ON b.bucket_id = a.bucket_id "
+		    . "SET a.pending_drop_count = a.pending_drop_count - b.posted_drop_count";
 	
+		$count_update_query = sprintf($count_update_query, implode("UNION ALL ", $drop_count_query));
+		DB::query(Database::UPDATE, $count_update_query)->execute();
+
+		// Cleanup
+		unset ($pending_drops, $drop_count_query, $push_log_query);
+	}
+
 	/**
 	 * Gets the REST endpoints for posting drops for each of the specified
 	 * buckets
@@ -82,7 +143,7 @@ class Controller_Ushahidi_Poster extends Controller {
 	{
 		// Store for the push targets
 		$push_targets = array();
-		
+
 		// Get the 
 		$all_targets = DB::select('buckets.id', 'deployment_url', 'deployment_users.client_id', 'deployment_users.client_secret')
 		    ->from('deployment_push_settings')
@@ -91,25 +152,26 @@ class Controller_Ushahidi_Poster extends Controller {
 		    ->join('deployments', 'INNER')
 		    ->on('deployment_push_settings.deployment_id', '=', 'deployments.id')
 		    ->join('accounts', 'INNER')
-		    ->on('account.id', '=', 'buckets.account_id')
+		    ->on('accounts.id', '=', 'buckets.account_id')
 		    ->join('deployment_users', 'INNER')
 		    ->on('deployment_users.deployment_id', '=', 'deployments.id')
-		    ->where('accounts.user_id', '=', 'deployment_users.user_id')
+		    ->where('accounts.user_id', '=', DB::expr('deployment_users.user_id'))
 		    ->where('buckets.id', 'IN', $bucket_ids)
-		    ->execute();
+		    ->execute()
+		    ->as_array();
 
 		// Get the endpoint segment for posting drops
 		$drops_endpoint = Kohana::$config->load("ushahidi.endpoints.drops");
 
 		foreach ($all_targets as $target)
 		{
-			$push_targets[$target->id] => array(
-			    'url' => Ushahidi_Core::get_request_url($target->deployment_url, $drops_endpoint),
-			    'client_id' => $target->client_id,
-			    'client_secret' => $target->client_secret
+			$push_targets[$target['id']] = array(
+			    'url' => Ushahidi_Core::get_request_url($target['deployment_url'], $drops_endpoint),
+			    'client_id' => $target['client_id'],
+			    'client_secret' => $target['client_secret']
 			);
 		}
-		
+
 		return $push_targets;
 	}
 	
@@ -122,18 +184,21 @@ class Controller_Ushahidi_Poster extends Controller {
 	 */
 	private function _post_drops($url, $payload)
 	{
-		// Create a new request
-		$request = Request::factory($url);
+		// Create a new request and set the body
+		$request = Request::factory($url)
+		    ->method("POST")
+		    ->body($payload);
 
-		// Set the HTTP POST parameters
-		foreach ($payload as $param => $values)
+		foreach ($payload as $param => $data)
 		{
-			$request->post($param, $values);
+			$request->post($param, $data);
 		}
-
 		// Execute the request
 		$response = Request_Client_Curl::factory()->execute($request);
-		
-		return json_decode($response, TRUE);
+
+		Kohana::$log->add(Log::INFO, "API responded with status :status",
+		    array(":status" => $response->status()));
+
+		return json_decode($response->body(), TRUE);
 	}
 }

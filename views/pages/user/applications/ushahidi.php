@@ -49,14 +49,14 @@
 					</div>
 					<div class="parameter">
 						<label for="deployment_token_key">
-							<p class="field"><?php echo __("Token Key"); ?></p>
-							<input type="text" name="token_key" value="<%= token_key %>" />
+							<p class="field"><?php echo __("Client ID"); ?></p>
+							<input type="text" name="client_id" value="<%= client_secret %>" />
 						</label>
 					</div>
 					<div class="parameter">
 						<label for="deployment_token_secret">
-							<p class="field"><?php echo __("Token Secret"); ?></p>
-							<input type="text" name="token_secret" value="<%= token_secret %>" />
+							<p class="field"><?php echo __("Client Secret"); ?></p>
+							<input type="text" name="client_secret" value="<%= client_secret %>" />
 						</label>
 					</div>
 				</section>
@@ -268,8 +268,8 @@ $(function(){
 			var deployment = new Deployment({
 				deployment_name: null,
 				deployment_url: null,
-				deployment_token_key: null,
-				deployment_token_secret: null
+				client_id: null,
+				client_secret: null
 			});
 			var view = new AddDeploymentModal({model: deployment});
 			modalShow(view.render().el);
