@@ -55,14 +55,12 @@ class Controller_Ushahidi_Poster extends Controller {
 		foreach ($push_targets as $bucket_id => $metadata)
 		{
 			// Get the payload for each push target
-			$drops_payload = json_encode($pending_drops[$bucket_id]['drops']);
+			$drops_array = $pending_drops[$bucket_id]['drops'];
+			$drops_payload = json_encode($drops_array);
 			$checksum = hash_hmac("sha256", $drops_payload, $metadata['client_secret']);
 
 			Kohana::$log->add(Log::DEBUG, "Checksum for bucket :id with :num drops - :checksum", 
-			    array(
-				    ":id" => $bucket_id,
-				    ":checksum" => $checksum,
-			        ":num" => count($pending_drops[$bucket_id]['drops'])
+			    array(":id" => $bucket_id, ":checksum" => $checksum, ":num" => count($drops_array)
 			));
 
 			$payload = array(
@@ -77,7 +75,7 @@ class Controller_Ushahidi_Poster extends Controller {
 			// Store the response
 			if ($response["status"] === "OK")
 			{
-				$posted_buckets[] = $bucket_id;
+				$posted_buckets[$bucket_id] = count($drops_array);
 				Kohana::$log->add(Log::INFO, "Drops from bucket :id successfuly posted",
 				   array(":id" => $bucket_id));
 			}
@@ -96,17 +94,16 @@ class Controller_Ushahidi_Poster extends Controller {
 		// 
 		$push_log_query = array();
 		$drop_count_query = array();
-		foreach ($posted_buckets as $posted_bucket)
+		foreach ($posted_buckets as $bucket_id => $bucket_drop_count)
 		{
 			// Queries to update the pending drop count
-			$bucket_drop_count = count($pending_drops[$posted_bucket]['drops']);
 			$drop_count_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `posted_drop_count`",
-			    $posted_bucket, $bucket_drop_count);
+			    $bucket_id, $bucket_drop_count);
 
 			// Queries to update the push log
-			foreach ($pending_drops[$posted_bucket]['drops'] as $drop)
+			foreach ($pending_drops[$bucket_id]['drops'] as $drop)
 			{
-				$push_log_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `droplet_id`", $posted_bucket, $drop['id']);
+				$push_log_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `droplet_id`", $bucket_id, $drop['id']);
 			}
 		}
 		
@@ -115,7 +112,7 @@ class Controller_Ushahidi_Poster extends Controller {
 		    . "ON b.bucket_id = a.bucket_id "
 		    . "SET a.droplet_push_status = 1, "
 		    . "a.droplet_date_push = '%s' "
-		    . "AND a.droplet_id = b.droplet_id";
+		    . "WHERE a.droplet_id = b.droplet_id";
 
 		$log_update_query = sprintf($log_update_query, implode("UNION ALL ", $push_log_query), gmdate("Y-m-d H:i:s"));
 		DB::query(Database::UPDATE, $log_update_query)->execute();
@@ -123,7 +120,8 @@ class Controller_Ushahidi_Poster extends Controller {
 		// Update the pending drop count
 		$count_update_query = "UPDATE `deployment_push_settings` AS a JOIN (%s) AS b "
 		    . "ON b.bucket_id = a.bucket_id "
-		    . "SET a.pending_drop_count = a.pending_drop_count - b.posted_drop_count";
+		    . "SET a.pending_drop_count = a.pending_drop_count - b.posted_drop_count "
+		    . "WHERE a.pending_drop_count > 0";
 	
 		$count_update_query = sprintf($count_update_query, implode("UNION ALL ", $drop_count_query));
 		DB::query(Database::UPDATE, $count_update_query)->execute();
@@ -187,14 +185,15 @@ class Controller_Ushahidi_Poster extends Controller {
 		// Create a new request and set the body
 		$request = Request::factory($url)
 		    ->method("POST")
-		    ->body($payload);
+		    ->client(Request_Client_Curl::factory());
 
 		foreach ($payload as $param => $data)
 		{
 			$request->post($param, $data);
 		}
+
 		// Execute the request
-		$response = Request_Client_Curl::factory()->execute($request);
+		$response = $request->execute();
 
 		Kohana::$log->add(Log::INFO, "API responded with status :status",
 		    array(":status" => $response->status()));

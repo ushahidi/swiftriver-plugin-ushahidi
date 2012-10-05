@@ -155,12 +155,12 @@ class Model_Deployment_Push_Log extends ORM {
 		$no_place_tags = array();
 
 		// Populate each bucket's drops with the drop metadata
-		foreach ($pending_drops as $key => & $data)
+		foreach ($pending_drops as $bucket_id => & $data)
 		{
 			Model_Droplet::populate_metadata($data['drops'], $data['account_id']);
 			
 			// Exclude drops that don't have place tags
-			foreach ($data['drops'] as & $drop)
+			foreach ($data['drops'] as $k => & $drop)
 			{
 				if (empty($drop['places']))
 				{
@@ -170,7 +170,7 @@ class Model_Deployment_Push_Log extends ORM {
 					}
 					
 					$no_place_tags[$bucket_id][] = $drop['id'];
-					unset($drop);
+					unset ($data['drops'][$k]);
 				}
 				else
 				{

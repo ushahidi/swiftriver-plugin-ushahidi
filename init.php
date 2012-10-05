@@ -62,7 +62,7 @@ Route::set('ushahidi_deployments', '<account>/<directory>/ushahidi(/<action>(/<i
 /**
  * Route alias for the drops poster
  */	
-Route::set('post_to_ushahidi', 'post2ushahidi')
+Route::set('post2ushahidi', 'post2ushahidi')
     ->defaults(array(
         'directory' => 'ushahidi',
         'controller' => 'poster',
