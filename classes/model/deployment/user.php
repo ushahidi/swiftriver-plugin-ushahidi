@@ -20,8 +20,8 @@ class Model_Deployment_User extends ORM {
 	 * @var array
 	 */
 	protected $_belongs_to = array(
-	    'user' => array(),
-	    'deployment' => array()
+		'user' => array(),
+		'deployment' => array()
 	);
 	
 	/**
@@ -32,9 +32,9 @@ class Model_Deployment_User extends ORM {
 	public function rules()
 	{
 		return array(
-		    'deployment_name' => array(array('not_empty')),
-		    'client_id' => array(array('not_empty')),
-		    'client_secret' => array(array('not_empty'))		
+			'deployment_name' => array(array('not_empty')),
+			'client_id' => array(array('not_empty')),
+			'client_secret' => array(array('not_empty'))		
 		);
 	}
 }

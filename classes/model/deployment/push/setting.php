@@ -20,8 +20,8 @@ class Model_Deployment_Push_Setting extends ORM {
 	 * @var array
 	 */
 	protected $_belongs_to = array(
-	    'bucket' => array(),
-	    'deployment' => array()
+		'bucket' => array(),
+		'deployment' => array()
 	);
 	
 	/**

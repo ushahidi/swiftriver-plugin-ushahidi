@@ -20,10 +20,10 @@ class Model_Deployment extends ORM {
 	 * @var array
 	 */
 	protected $_has_many = array(
-	    'deployment_categories' => array(),
-	    'deployment_push_settings' => array(),
-	
-		// A deployment can have one or more users
+		'deployment_categories' => array(),
+		'deployment_push_settings' => array(),
+
+        // A deployment can have one or more users
 		'users' => array(
 			'model' => 'user',
 			'through' => 'deployment_users',
@@ -51,7 +51,7 @@ class Model_Deployment extends ORM {
 			'deployment_url' => array(
 				array('not_empty'),
 				array('url')
-			)			
+			)
 		);
 	}
 	
@@ -120,8 +120,8 @@ class Model_Deployment extends ORM {
 		foreach ($deployment_categories as $category)
 		{
 			$categories[] = array(
-				'id' => $category->id,
-				'category_name' => $category->deployment_category_name
+			    'id' => $category->id,
+			    'category_name' => $category->deployment_category_name
 			);
 		}		
 		return $categories;
@@ -138,10 +138,10 @@ class Model_Deployment extends ORM {
 	{
 		// Columns to insert
 		$columns = array(
-		    'deployment_id',
-		    'deployment_category_id',
-		    'deployment_parent_category_id',
-		    'deployment_category_name'
+			'deployment_id',
+			'deployment_category_id',
+			'deployment_parent_category_id',
+			'deployment_category_name'
 		);
 
 		$insert_query = DB::insert('deployment_categories', $columns);
@@ -245,7 +245,6 @@ class Model_Deployment extends ORM {
 	public function get_drop_posting_url()
 	{
 		$drops_endpoint = Kohana::$config->load("ushahidi.endpoints.drops");
-		
 		return Ushahidi_Core::get_request_url($this->deployment_url, $drops_endpoint);
 	}
 }

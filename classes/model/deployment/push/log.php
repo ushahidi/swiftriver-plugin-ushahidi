@@ -19,7 +19,7 @@ class Model_Deployment_Push_Log extends ORM {
 	 * @var array
 	 */
 	protected $_belongs_to = array(
-	    'bucket' => array(),
+		'bucket' => array(),
 		'deployment' => array(),
 	);
 
@@ -108,25 +108,26 @@ class Model_Deployment_Push_Log extends ORM {
 		$pending_drops = array();
 
 		// Get the drops to be pushed
-		$query = DB::select('dpl.bucket_id', 'buckets.account_id', 'droplets.id', 'droplets.droplet_hash',
-		           'droplets.droplet_title', 'droplets.droplet_content', 'identity_name', 'identity_avatar',
-		           array('dc.deployment_category_id', 'category_id'), 'droplets.droplet_date_add')
-		    ->from(array('deployment_push_logs', 'dpl'))
-		    ->join('droplets', 'INNER')
-		    ->on('dpl.droplet_id', '=', 'droplets.id')
-		    ->join('identities', 'INNER')
-		    ->on('droplets.identity_id', '=', 'identities.id')
-		    ->join('buckets', 'INNER')
-		    ->on('dpl.bucket_id', '=', 'buckets.id')
-		    ->join(array('deployment_push_settings', 'dps'), 'INNER')
-		    ->on('dps.bucket_id', '=', 'dpl.bucket_id')
-		    ->join(array('deployment_categories', 'dc'), 'INNER')
-		    ->on('dps.deployment_category_id', '=', 'dc.id')
-		    ->where('dc.deployment_id', '=', DB::expr('dps.deployment_id'))
-		    ->where('dps.deployment_id', '=', DB::expr('dpl.deployment_id'))
-		    ->where('dpl.droplet_push_status', '=', 0)
-		    ->where('buckets.id', 'IN', $bucket_ids)
-		    ->group_by('dpl.bucket_id', 'droplets.droplet_hash');
+		$query = DB::select('dpl.bucket_id', 'buckets.account_id', 'droplets.id',
+					'droplets.droplet_hash', 'droplets.droplet_title',
+					'droplets.droplet_content', 'identity_name', 'identity_avatar',
+					array('dc.deployment_category_id', 'category_id'), 'droplets.droplet_date_add')
+			->from(array('deployment_push_logs', 'dpl'))
+			->join('droplets', 'INNER')
+			->on('dpl.droplet_id', '=', 'droplets.id')
+			->join('identities', 'INNER')
+			->on('droplets.identity_id', '=', 'identities.id')
+			->join('buckets', 'INNER')
+			->on('dpl.bucket_id', '=', 'buckets.id')
+			->join(array('deployment_push_settings', 'dps'), 'INNER')
+			->on('dps.bucket_id', '=', 'dpl.bucket_id')
+			->join(array('deployment_categories', 'dc'), 'INNER')
+			->on('dps.deployment_category_id', '=', 'dc.id')
+			->where('dc.deployment_id', '=', DB::expr('dps.deployment_id'))
+			->where('dps.deployment_id', '=', DB::expr('dpl.deployment_id'))
+			->where('dpl.droplet_push_status', '=', 0)
+			->where('buckets.id', 'IN', $bucket_ids)
+			->group_by('dpl.bucket_id', 'droplets.droplet_hash');
 
 		$droplets = $query->execute()->as_array();
 

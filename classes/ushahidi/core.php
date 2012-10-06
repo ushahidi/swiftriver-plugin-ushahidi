@@ -89,7 +89,7 @@ class Ushahidi_Core {
 		{
 			// API returned an error
 			Kohana::$log->add(Log::ERROR, "API returned an error - :message",
-			    array(":message" => $status['message']));
+				array(":message" => $status['message']));
 		}
 	}
 	

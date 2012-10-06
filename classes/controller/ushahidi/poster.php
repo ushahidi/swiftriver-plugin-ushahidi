@@ -59,14 +59,14 @@ class Controller_Ushahidi_Poster extends Controller {
 			$drops_payload = json_encode($drops_array);
 			$checksum = hash_hmac("sha256", $drops_payload, $metadata['client_secret']);
 
-			Kohana::$log->add(Log::DEBUG, "Checksum for bucket :id with :num drops - :checksum", 
-			    array(":id" => $bucket_id, ":checksum" => $checksum, ":num" => count($drops_array)
+			Kohana::$log->add(Log::DEBUG, "Checksum for bucket :id with :num drops - :checksum",
+				array(":id" => $bucket_id, ":checksum" => $checksum, ":num" => count($drops_array)
 			));
 
 			$payload = array(
-			    "drops" => $drops_payload,
-			    "checksum" => $checksum,
-			    "client_id" => $metadata['client_id']
+				"drops" => $drops_payload,
+				"checksum" => $checksum,
+				"client_id" => $metadata['client_id']
 			);
 
 			// Submit the payload
@@ -77,7 +77,7 @@ class Controller_Ushahidi_Poster extends Controller {
 			{
 				$posted_buckets[$bucket_id] = count($drops_array);
 				Kohana::$log->add(Log::INFO, "Drops from bucket :id successfuly posted",
-				   array(":id" => $bucket_id));
+					array(":id" => $bucket_id));
 			}
 		}
 		
@@ -164,9 +164,9 @@ class Controller_Ushahidi_Poster extends Controller {
 		foreach ($all_targets as $target)
 		{
 			$push_targets[$target['id']] = array(
-			    'url' => Ushahidi_Core::get_request_url($target['deployment_url'], $drops_endpoint),
-			    'client_id' => $target['client_id'],
-			    'client_secret' => $target['client_secret']
+				'url' => Ushahidi_Core::get_request_url($target['deployment_url'], $drops_endpoint),
+				'client_id' => $target['client_id'],
+				'client_secret' => $target['client_secret']
 			);
 		}
 
@@ -196,7 +196,7 @@ class Controller_Ushahidi_Poster extends Controller {
 		$response = $request->execute();
 
 		Kohana::$log->add(Log::INFO, "API responded with status :status",
-		    array(":status" => $response->status()));
+			array(":status" => $response->status()));
 
 		return json_decode($response->body(), TRUE);
 	}
