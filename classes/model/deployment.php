@@ -75,8 +75,9 @@ class Model_Deployment extends ORM {
 			}
 			else
 			{
-				throw new Ushahidi_Exception(__("SwiftRiver cannot push drops to the :name deployment",
-				    array(":name" => $this->deployment_url)));
+				throw new Ushahidi_Exception(":url is either running a version of Ushahidi "
+				    . "that is incompatible with this plugin or it's not a valid deployment.",
+				    array(":url" => $this->deployment_url));
 			}
 		}
 		else
