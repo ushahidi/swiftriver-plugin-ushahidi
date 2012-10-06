@@ -27,6 +27,8 @@ class Ushahidi_Core {
 		// Get the platform version
 		$min_version = Kohana::$config->load('ushahidi.min_version');
 		
+		$max_version = Kohana::$config->load('ushahidi.max_version');
+		
 		// Endpoint for the version check
 		$version_endpoint = Kohana::$config->load('ushahidi.endpoints.version_check');
 		
@@ -36,13 +38,20 @@ class Ushahidi_Core {
 		// Send the request
 		$api_response = self::_api_request($request_url);
 		
+		if (empty($api_response) OR ! array_key_exists('error', $api_response))
+		{
+			Kohana::$log->add(Log::ERROR, ":url is not a valid Ushahidi deployment",
+			    array(":url" => $deployment_url));
+			return FALSE;
+		}
+		
 		list($status, $version) = array($api_response['error'], $api_response['payload']['version'][0]);
 		
 		if ($status['code'] == '0')
 		{
 			// Get the version of the deployment
 			$deployment_version = $version['version'];
-			return ($deployment_version >= $min_version);
+			return ($deployment_version >= $min_version AND $deployment_version <= $max_version);
 		}
 		else
 		{
@@ -96,7 +105,7 @@ class Ushahidi_Core {
 	{
 		$request_url = $deployment_url;
 		
-		if (substr($request_url, strlen($request_url)-2, 1) !== "/")
+		if (substr($request_url, strlen($request_url)-1, 1) !== "/")
 		{
 			$request_url .= "/";
 		}
@@ -115,9 +124,19 @@ class Ushahidi_Core {
 	 */
 	private static function _api_request($request_url)
 	{
-		$api_response = Request_Client_Curl::factory()
-		   ->execute(Request::factory($request_url));
+		// Cleanse query parameters from the supplied URL
+		$split_url = explode("?", $request_url);
+		$request_url = array_shift($split_url);
 		
+		// Get the query params
+		parse_str($split_url[0], $query_params);
+
+		// Send the request and fetch the response
+		$request = Request::factory($request_url)
+		    ->query($query_params);
+
+		$api_response = Request_Client_Curl::factory()->execute($request);
+
 		return json_decode($api_response, TRUE);
 	}
 }

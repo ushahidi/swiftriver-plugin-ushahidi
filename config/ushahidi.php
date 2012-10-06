@@ -15,8 +15,11 @@
  */
 return array(
 
-	// Version of the ushahidi deployment
+	// Minimum Version of the ushahidi deployment
 	'min_version' => '2.4',
+	
+	// Maximum version
+	'max_version' => '2.7',
 
 	// Endpoints for the Ushahidi platform API
 	'endpoints' => array(
