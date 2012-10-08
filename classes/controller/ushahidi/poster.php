@@ -63,8 +63,10 @@ class Controller_Ushahidi_Poster extends Controller {
 				array(":id" => $bucket_id, ":checksum" => $checksum, ":num" => count($drops_array)
 			));
 
+			// Base64 encode the drops so that the data remain intact without modification during
+			// transport to the API endpoint
 			$payload = array(
-				"drops" => $drops_payload,
+				"drops" => base64_encode($drops_payload),
 				"checksum" => $checksum,
 				"client_id" => $metadata['client_id']
 			);
