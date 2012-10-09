@@ -48,6 +48,17 @@ class Model_Deployment_Push_Log extends ORM {
 			
 			$settings_orm->pending_drop_count += 1;
 			$settings_orm->save();
+			
+			// Check pending_drop_count >= push_drop_count
+			$push_drop_count = $settings_orm->push_drop_count;
+			$pending = $settings_orm->pending_drop_count;
+			if ($pending > 0 AND ($pending >= $push_drop_count))
+			{
+				// Notify observers listening on this event that the bucket is ready
+				// for pushing to Ushahidi
+				Swiftriver_Event::run("swiftriver.bucket.ushahidi.push", $bucket_id);
+			}
+			
 		}
 		else
 		{
