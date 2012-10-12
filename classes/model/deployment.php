@@ -22,8 +22,8 @@ class Model_Deployment extends ORM {
 	protected $_has_many = array(
 		'deployment_categories' => array(),
 		'deployment_push_settings' => array(),
-
-        // A deployment can have one or more users
+		
+		// A deployment can have one or more users
 		'users' => array(
 			'model' => 'user',
 			'through' => 'deployment_users',

@@ -26,7 +26,6 @@ class Model_Deployment_User extends ORM {
 	
 	/**
 	 * Validation rules
-	 *
 	 * @return array
 	 */
 	public function rules()
