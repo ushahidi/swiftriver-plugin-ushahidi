@@ -46,7 +46,7 @@ class Controller_Ushahidi_Poster extends Controller {
 			exit;
 		}
 		// Get the push URLs and client ID for each push target
-		$push_targets = $this->_get_push_targets(array_keys($pending_drops));
+		$push_targets = Model_Deployment_Setting::get_push_targets(array_keys($pending_drops));
 		
 		// Store for the buckets succesfully pushed to Ushahidi
 		$posted_buckets = array();
@@ -132,49 +132,6 @@ class Controller_Ushahidi_Poster extends Controller {
 		unset ($pending_drops, $drop_count_query, $push_log_query);
 	}
 
-	/**
-	 * Gets the REST endpoints for posting drops for each of the specified
-	 * buckets
-	 *
-	 * @param  array $bucket_ids List of bucket ids
-	 * @return array
-	 */
-	private function _get_push_targets($bucket_ids)
-	{
-		// Store for the push targets
-		$push_targets = array();
-
-		// Get the 
-		$all_targets = DB::select('buckets.id', 'deployment_url', 'deployment_users.client_id', 'deployment_users.client_secret')
-		    ->from('deployment_push_settings')
-		    ->join('buckets', 'INNER')
-		    ->on('buckets.id', '=', 'deployment_push_settings.bucket_id')
-		    ->join('deployments', 'INNER')
-		    ->on('deployment_push_settings.deployment_id', '=', 'deployments.id')
-		    ->join('accounts', 'INNER')
-		    ->on('accounts.id', '=', 'buckets.account_id')
-		    ->join('deployment_users', 'INNER')
-		    ->on('deployment_users.deployment_id', '=', 'deployments.id')
-		    ->where('accounts.user_id', '=', DB::expr('deployment_users.user_id'))
-		    ->where('buckets.id', 'IN', $bucket_ids)
-		    ->execute()
-		    ->as_array();
-
-		// Get the endpoint segment for posting drops
-		$drops_endpoint = Kohana::$config->load("ushahidi.endpoints.drops");
-
-		foreach ($all_targets as $target)
-		{
-			$push_targets[$target['id']] = array(
-				'url' => Ushahidi_Core::get_request_url($target['deployment_url'], $drops_endpoint),
-				'client_id' => $target['client_id'],
-				'client_secret' => $target['client_secret']
-			);
-		}
-
-		return $push_targets;
-	}
-	
 	/**
 	 * POSTs the specified payload to the provided URL
 	 *
