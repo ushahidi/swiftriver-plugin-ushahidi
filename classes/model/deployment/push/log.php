@@ -56,6 +56,8 @@ class Model_Deployment_Push_Log extends ORM {
 			{
 				// Notify observers listening on this event that the bucket is ready
 				// for pushing to Ushahidi
+				Kohana::$log->add(Log::INFO, "Preparing to push bucket :id to ushahidi",
+					array(":id" => $bucket_id));
 				Swiftriver_Event::run("swiftriver.bucket.ushahidi.push", $bucket_id);
 			}
 			
@@ -83,7 +85,7 @@ class Model_Deployment_Push_Log extends ORM {
 		// Get the push settings for the bucket
 		$settings_orm = Model_Deployment_Push_Setting::get_settings($bucket_id);
 		
-		if ($settings_orm->loaded())
+		if ($settings_orm->loaded() AND $settings_orm->pending_drop_count > 0)
 		{
 			// Delete the entry from the push log
 			$entry = ORM::factory('deployment_push_log')
@@ -94,7 +96,7 @@ class Model_Deployment_Push_Log extends ORM {
 			
 			if ($entry->loaded())
 			{
-				if ($entry->droplet_push_status === 0)
+				if ($entry->droplet_push_status == 0)
 				{
 					$settings_orm->pending_drop_count -= 1;
 					$settings_orm->save();

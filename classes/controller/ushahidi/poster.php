@@ -46,7 +46,7 @@ class Controller_Ushahidi_Poster extends Controller {
 			exit;
 		}
 		// Get the push URLs and client ID for each push target
-		$push_targets = Model_Deployment_Setting::get_push_targets(array_keys($pending_drops));
+		$push_targets = Model_Deployment_Push_Setting::get_push_targets(array_keys($pending_drops));
 		
 		// Store for the buckets succesfully pushed to Ushahidi
 		$posted_buckets = array();
