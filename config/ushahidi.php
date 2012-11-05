@@ -24,8 +24,8 @@ return array(
 	// Endpoints for the Ushahidi platform API
 	'endpoints' => array(
 		
-		// Platform version API
-		'version_check' => "api?task=version",
+		// If the plugin exists
+		'ping' => "api/swiftriver/ping",
 		
 		// Categories API
 		'categories' => 'api?task=categories',	

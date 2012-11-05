@@ -29,8 +29,9 @@ class Ushahidi_Core {
 		
 		$max_version = Kohana::$config->load('ushahidi.max_version');
 		
-		// Endpoint for the version check
-		$version_endpoint = Kohana::$config->load('ushahidi.endpoints.version_check');
+		// Endpoint to check whether the plugin has been installed on the
+        // ushahidi deployment
+		$version_endpoint = Kohana::$config->load('ushahidi.endpoints.ping');
 		
 		// Get the request url
 		$request_url = self::get_request_url($deployment_url, $version_endpoint);
@@ -38,28 +39,18 @@ class Ushahidi_Core {
 		// Send the request
 		$api_response = self::_api_request($request_url);
 		
-		if (empty($api_response) OR ! array_key_exists('error', $api_response))
+		if ( ! $api_response)
 		{
-			Kohana::$log->add(Log::ERROR, ":url is not a valid Ushahidi deployment",
-			    array(":url" => $deployment_url));
+			Kohana::$log->add(Log::ERROR, ":url is not a valid Ushahidi deployment or the SwiftRiver plugin
+                is not installed on the target deployment", array(":url" => $deployment_url));
 			return FALSE;
 		}
-		
-		list($status, $version) = array($api_response['error'], $api_response['payload']['version'][0]);
-		
-		if ($status['code'] == '0')
-		{
-			// Get the version of the deployment
-			$deployment_version = $version['version'];
-			return ($deployment_version >= $min_version AND $deployment_version <= $max_version);
-		}
-		else
-		{
-			Kohana::$log->add(Log::ERROR, "API returned an error - :message",
-			    array(":message" => $status['message']));
+        
+        // Kohana::$log->add(Log::DEBUG, json_encode($api_response));
 
-			return FALSE;
-		}
+    	// Get the version of the deployment
+    	$deployment_version = $api_response['platform_version'];
+    	return ($deployment_version >= $min_version AND $deployment_version <= $max_version);
 	}
 
 	/**
@@ -78,6 +69,12 @@ class Ushahidi_Core {
 		
 		// Execute the request and fetch the response
 		$api_response = self::_api_request($request_url);
+        
+        if ( ! $api_response)
+        {
+            Kohana::$log->add(Log::ERROR, "An unknown error occurred.");
+            return FALSE;
+        }
 		
 		list($status, $categories) = array($api_response['error'], $api_response['payload']['categories']);	
 
@@ -120,7 +117,7 @@ class Ushahidi_Core {
 	 * as an array
 	 *
 	 * @param  string $request_url URL for the cURL request
-	 * @return array
+	 * @return mixed  Array on success (request returns a 200 status code), FALSE otherwise
 	 */
 	private static function _api_request($request_url)
 	{
@@ -128,15 +125,20 @@ class Ushahidi_Core {
 		$split_url = explode("?", $request_url);
 		$request_url = array_shift($split_url);
 		
-		// Get the query params
-		parse_str($split_url[0], $query_params);
-
 		// Send the request and fetch the response
-		$request = Request::factory($request_url)
-		    ->query($query_params);
+		$request = Request::factory($request_url);
+        Kohana::$log->add(Log::DEBUG, $request_url);
+        if (count($split_url))
+        {
+    		// Get the query params
+    		parse_str($split_url[0], $query_params);
+            $request->query($query_params);            
+        }
 
 		$api_response = Request_Client_Curl::factory()->execute($request);
-
-		return json_decode($api_response, TRUE);
+        
+        return $api_response->status() == 200
+            ? json_decode($api_response->body(), TRUE)
+            : FALSE;
 	}
 }
