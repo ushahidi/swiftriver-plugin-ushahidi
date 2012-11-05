@@ -22,6 +22,15 @@ class Controller_Ushahidi_Poster extends Controller {
 			exit;
 		}
 		
+		try 
+		{
+			Swiftriver_Mutex::obtain(get_class());
+		} catch (SwiftRiver_Exception_Mutex $e) 
+		{
+			Kohana::$log->add(Log::ERROR, "Unable to obtain mutex");
+			exit;
+		}
+		
 		Kohana::$log->add(Log::INFO, "Preparing to execute bucket push");
 
 		// Get the buckets that are ready to post drops to Ushahidi
@@ -130,6 +139,7 @@ class Controller_Ushahidi_Poster extends Controller {
 
 		// Cleanup
 		unset ($pending_drops, $drop_count_query, $push_log_query);
+		Swiftriver_Mutex::release(get_class());
 	}
 
 	/**
