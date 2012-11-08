@@ -19,7 +19,7 @@ class Ushahidi_CoreTest extends Unittest_TestCase {
 	{
 		return array(
 			array(
-				'http://stable.ushahidi.com',
+				'http://ushahidi.dev',
 				'http://www.google.com'
 			)
 		);
@@ -72,5 +72,42 @@ class Ushahidi_CoreTest extends Unittest_TestCase {
 
 		// Return url string should match the on in $expected
 		$this->assertEquals($request_url, $expected);
+	}
+	
+	/**
+	 * Provides data for test_api_request
+	 *
+	 * @return array
+	 */
+	public function provider_api_request()
+	{
+		return array(
+			array(
+				// HTTP URL
+				'http://stable.ushahidi.com/api?task=version',
+				
+				// HTTPS URL
+				'https://logintest.crdmp.com/api?task=version'
+			)
+		);
+	}
+	
+	/**
+	 * Tests API requests sent over HTTP(S). For HTTPS URIs (@param $https_url), 
+	 * this test checks whether cURL disregards verification of the peer's 
+	 * certification especially where the peer is using a self-signed certificate
+	 *
+	 * @covers Ushahidi_Core::api_request
+	 * @dataProvider provider_api_request
+	 */
+	public function test_api_request($http_url, $https_url)
+	{
+		// Request over HTTP
+		$http_response = Ushahidi_Core::api_request($http_url);
+		$this->assertTrue(is_array($http_response));
+		
+		// Request over HTTPS
+		$https_response = Ushahidi_Core::api_request($https_url);
+		$this->assertTrue(is_array($https_response));
 	}
 }

@@ -37,7 +37,7 @@ class Ushahidi_Core {
 		$request_url = self::get_request_url($deployment_url, $version_endpoint);
 		
 		// Send the request
-		$api_response = self::_api_request($request_url);
+		$api_response = self::api_request($request_url);
 		
 		if ( ! $api_response)
 		{
@@ -68,7 +68,7 @@ class Ushahidi_Core {
 		$request_url = self::get_request_url($deployment->deployment_url, $categories_endpoint);
 		
 		// Execute the request and fetch the response
-		$api_response = self::_api_request($request_url);
+		$api_response = self::api_request($request_url);
         
         if ( ! $api_response)
         {
@@ -119,7 +119,7 @@ class Ushahidi_Core {
 	 * @param  string $request_url URL for the cURL request
 	 * @return mixed  Array on success (request returns a 200 status code), FALSE otherwise
 	 */
-	private static function _api_request($request_url)
+	public static function api_request($request_url)
 	{
 		// Cleanse query parameters from the supplied URL
 		$split_url = explode("?", $request_url);
@@ -127,7 +127,6 @@ class Ushahidi_Core {
 		
 		// Send the request and fetch the response
 		$request = Request::factory($request_url);
-        Kohana::$log->add(Log::DEBUG, $request_url);
         if (count($split_url))
         {
     		// Get the query params
@@ -135,7 +134,10 @@ class Ushahidi_Core {
             $request->query($query_params);            
         }
 
-		$api_response = Request_Client_Curl::factory()->execute($request);
+		// Initiate cURL request
+		$api_response = Request_Client_Curl::factory()
+			->options(CURLOPT_SSL_VERIFYPEER, FALSE)
+			->execute($request);
         
         return $api_response->status() == 200
             ? json_decode($api_response->body(), TRUE)
