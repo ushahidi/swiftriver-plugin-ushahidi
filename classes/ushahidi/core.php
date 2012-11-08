@@ -127,8 +127,8 @@ class Ushahidi_Core {
 		$request = Request::factory($request_url);
 		if (count($split_url))
 		{
-    		// Get the query params
-    		parse_str($split_url[0], $query_params);
+			// Get the query params
+			parse_str($split_url[0], $query_params);
 			$request->query($query_params);            
 		}
 

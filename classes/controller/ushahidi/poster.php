@@ -151,10 +151,15 @@ class Controller_Ushahidi_Poster extends Controller {
 	 */
 	private function _post_drops($url, $payload)
 	{
+		// CURL client to be used for posting the drops
+		// Disable verification of peer's SSL certificate
+		$curl_client = Request_Client_Curl::factory()
+			->options(CURLOPT_SSL_VERIFYPEER, FALSE);
+
 		// Create a new request and set the body
 		$request = Request::factory($url)
 		    ->method("POST")
-		    ->client(Request_Client_Curl::factory());
+		    ->client($curl_client);
 
 		foreach ($payload as $param => $data)
 		{
