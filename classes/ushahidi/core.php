@@ -30,7 +30,7 @@ class Ushahidi_Core {
 		$max_version = Kohana::$config->load('ushahidi.max_version');
 		
 		// Endpoint to check whether the plugin has been installed on the
-        // ushahidi deployment
+		// ushahidi deployment
 		$version_endpoint = Kohana::$config->load('ushahidi.endpoints.ping');
 		
 		// Get the request url
@@ -41,16 +41,14 @@ class Ushahidi_Core {
 		
 		if ( ! $api_response)
 		{
-			Kohana::$log->add(Log::ERROR, ":url is not a valid Ushahidi deployment or the SwiftRiver plugin
-                is not installed on the target deployment", array(":url" => $deployment_url));
+			Kohana::$log->add(Log::ERROR, ":url is not a valid Ushahidi deployment or the SwiftRiver plugin "
+			    . "is not installed on the target deployment", array(":url" => $deployment_url));
 			return FALSE;
 		}
         
-        // Kohana::$log->add(Log::DEBUG, json_encode($api_response));
-
-    	// Get the version of the deployment
-    	$deployment_version = $api_response['platform_version'];
-    	return ($deployment_version >= $min_version AND $deployment_version <= $max_version);
+		// Get the version of the deployment
+		$deployment_version = $api_response['platform_version'];
+		return ($deployment_version >= $min_version AND $deployment_version <= $max_version);
 	}
 
 	/**
@@ -70,11 +68,11 @@ class Ushahidi_Core {
 		// Execute the request and fetch the response
 		$api_response = self::api_request($request_url);
         
-        if ( ! $api_response)
-        {
-            Kohana::$log->add(Log::ERROR, "An unknown error occurred.");
-            return FALSE;
-        }
+		if ( ! $api_response)
+		{
+			Kohana::$log->add(Log::ERROR, "An unknown error occurred.");
+			return FALSE;
+		}
 		
 		list($status, $categories) = array($api_response['error'], $api_response['payload']['categories']);	
 
@@ -127,20 +125,20 @@ class Ushahidi_Core {
 		
 		// Send the request and fetch the response
 		$request = Request::factory($request_url);
-        if (count($split_url))
-        {
+		if (count($split_url))
+		{
     		// Get the query params
     		parse_str($split_url[0], $query_params);
-            $request->query($query_params);            
-        }
+			$request->query($query_params);            
+		}
 
 		// Initiate cURL request
 		$api_response = Request_Client_Curl::factory()
 			->options(CURLOPT_SSL_VERIFYPEER, FALSE)
 			->execute($request);
-        
-        return $api_response->status() == 200
-            ? json_decode($api_response->body(), TRUE)
-            : FALSE;
+
+		return $api_response->status() == 200
+			? json_decode($api_response->body(), TRUE)
+			: FALSE;
 	}
 }
