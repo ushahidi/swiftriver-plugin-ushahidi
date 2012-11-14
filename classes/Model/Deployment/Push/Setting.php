@@ -46,7 +46,7 @@ class Model_Deployment_Push_Setting extends ORM {
 	 */
 	public static function get_settings($bucket_id)
 	{
-		return ORM::factory('deployment_push_setting')
+		return ORM::factory('Deployment_Push_Setting')
 			->where('bucket_id','=', $bucket_id)
 			->find();
 	}
@@ -65,7 +65,7 @@ class Model_Deployment_Push_Setting extends ORM {
 	public static function get_eligible_buckets()
 	{
 		$bucket_ids = array();
-		$eligible_buckets = ORM::factory('deployment_push_setting')
+		$eligible_buckets = ORM::factory('Deployment_Push_Setting')
 			->where('pending_drop_count', '>=', 'push_drop_count')
 			->where('pending_drop_count', '>', 0)
 			->find_all();

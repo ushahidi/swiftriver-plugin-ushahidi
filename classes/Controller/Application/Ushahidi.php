@@ -91,7 +91,7 @@ class Controller_Application_Ushahidi extends Controller_User {
 			// Update existing deployment
 			$entry_id = intval($this->request->param('id', 0));
 
-			$user_deployment = ORM::factory('deployment_user', $entry_id);
+			$user_deployment = ORM::factory('Deployment_User', $entry_id);
 			if ( ! $user_deployment->loaded())
 			{
 				throw HTTP_Exception_404(__("The specified deployment does not exist"));
@@ -107,7 +107,7 @@ class Controller_Application_Ushahidi extends Controller_User {
 			
 			case "DELETE":
 			$deployment_id = $this->request->param('id', 0);
-			$deployment_orm = ORM::factory('deployment', $deployment_id);
+			$deployment_orm = ORM::factory('Deployment', $deployment_id);
 			if ($deployment_orm->loaded())
 			{
 				$deployment_orm->remove('users', $this->user);

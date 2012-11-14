@@ -88,7 +88,7 @@ class Model_Deployment_Push_Log extends ORM {
 		if ($settings_orm->loaded() AND $settings_orm->pending_drop_count > 0)
 		{
 			// Delete the entry from the push log
-			$entry = ORM::factory('deployment_push_log')
+			$entry = ORM::factory('Deployment_Push_Log')
 			    ->where('bucket_id', '=', $bucket_id)
 			    ->where('droplet_id', '=', $droplet_id)
 			    ->where('deployment_id', '=', $settings_orm->deployment_id)

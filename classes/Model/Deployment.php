@@ -168,7 +168,7 @@ class Model_Deployment extends ORM {
 	public static function get_deployments_array($user_id)
 	{
 		$deployments = array();
-		foreach (ORM::factory('deployment_user')->where('user_id', '=', $user_id)->find_all() as $entry)
+		foreach (ORM::factory('Deployment_User')->where('user_id', '=', $user_id)->find_all() as $entry)
 		{
 			$deployments[] = array(
 				"id" => $entry->id,
@@ -234,7 +234,7 @@ class Model_Deployment extends ORM {
 	 */
 	public static function get_deployment_by_url($url)
 	{
-		return ORM::factory('deployment')->where('deployment_url', '=', $url)->find();
+		return ORM::factory('Deployment')->where('deployment_url', '=', $url)->find();
 	}
 	
 	/**

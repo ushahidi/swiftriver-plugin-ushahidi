@@ -94,7 +94,7 @@ class Controller_Bucket_Ushahidi extends Controller_Bucket_Settings {
 			case "GET":
 			// Get the post data
 			$deployment_id = $this->request->query('id');
-			$deployment = ORM::factory('deployment', $deployment_id);
+			$deployment = ORM::factory('Deployment', $deployment_id);
 			
 			if ($deployment->loaded())
 			{
