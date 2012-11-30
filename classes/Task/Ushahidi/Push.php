@@ -1,6 +1,6 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * This controller posts drops to the configured ushahidi deployments
+ * This task posts drops to the configured ushahidi deployments
  *
  * PHP version 5
  * LICENSE: This source file is subject to the AGPL license 
@@ -12,16 +12,10 @@
  * @copyright  Ushahidi - http://www.ushahidi.com
  * @license    http://www.gnu.org/licenses/agpl.html GNU Affero General Public License (AGPL)
  */
-class Controller_Ushahidi_Poster extends Controller {
+class Task_Ushahidi_Push extends Minion_Task {
 	
-	public function action_run()
+	protected function _execute(array $params)
 	{
-		if (php_sapi_name() !== 'cli')
-		{
-			Kohana::$log->add(Log::ERROR, "Push to ushahidi must be run in CLI mode");
-			exit;
-		}
-		
 		try 
 		{
 			Swiftriver_Mutex::obtain(get_class());
@@ -64,6 +58,9 @@ class Controller_Ushahidi_Poster extends Controller {
 		foreach ($push_targets as $bucket_id => $metadata)
 		{
 			// Get the payload for each push target
+			if (empty($pending_drops[$bucket_id]['drops']))
+				continue;
+			
 			$drops_array = $pending_drops[$bucket_id]['drops'];
 			$drops_payload = json_encode($drops_array);
 			$checksum = hash_hmac("sha256", $drops_payload, $metadata['client_secret']);
@@ -95,7 +92,7 @@ class Controller_Ushahidi_Poster extends Controller {
 		// Check if any buckets were posted
 		if ( ! count($posted_buckets))
 		{
-			Kohana::$log->add(Log::INFO, "An error occured. No buckets were posted to the deployments");
+			Kohana::$log->add(Log::INFO, "No buckets were posted to the deployments");
 			exit;
 		}
 
