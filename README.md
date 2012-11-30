@@ -31,7 +31,7 @@ This plugin is only compatible with 2.5+ of the [Ushahidi platform](https://gith
 The drops poster pushes buckets that have been configured to push their drops to an Ushahidi deployment.
 To schedule the posting of drops to Ushahidi every day at midnight, add the following lines to your crontab:
 
-    * 0 * * * cd <app home>; php5 index.php --uri=post2ushahidi >> application/logs/post2ushahidi.log 2>&1
+    * 0 * * * cd <app home>; php5 index.php --task=ushahidi:push >> application/logs/post2ushahidi.log 2>&1
 
 
 ## Contributing
