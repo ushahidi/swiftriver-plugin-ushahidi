@@ -45,10 +45,10 @@ class Model_Deployment_Push_Log extends ORM {
 			$log_entry_orm->droplet_id = $droplet_id;
 			$log_entry_orm->droplet_push_status = 0;
 			$log_entry_orm->save();
-			
+
 			$settings_orm->pending_drop_count += 1;
 			$settings_orm->save();
-			
+
 			// Check pending_drop_count >= push_drop_count
 			$push_drop_count = $settings_orm->push_drop_count;
 			$pending = $settings_orm->pending_drop_count;
@@ -60,7 +60,7 @@ class Model_Deployment_Push_Log extends ORM {
 					array(":id" => $bucket_id));
 				Swiftriver_Event::run("swiftriver.bucket.ushahidi.push", $bucket_id);
 			}
-			
+
 		}
 		else
 		{
@@ -79,7 +79,7 @@ class Model_Deployment_Push_Log extends ORM {
 	{
 		// Get the event data
 		$event_data = Swiftriver_Event::$data;
-		
+
 		list($bucket_id, $droplet_id) = array($event_data['bucket_id'], $event_data['droplet_id']);
 
 		// Get the push settings for the bucket
@@ -149,7 +149,7 @@ class Model_Deployment_Push_Log extends ORM {
 		{
 			Model_Droplet::utf8_encode($droplet);
 		}
-				
+
 		// Group the drops (in the return array) per bucket and account
 		foreach ($droplets as $droplet)
 		{
@@ -161,32 +161,19 @@ class Model_Deployment_Push_Log extends ORM {
 				    'drops' => array()
 				);
 			}
-			
+
 			$pending_drops[$bucket_id]['drops'][] = $droplet;
 		}
-
-		// Store for the drops without place tags
-		$no_place_tags = array();
 
 		// Populate each bucket's drops with the drop metadata
 		foreach ($pending_drops as $bucket_id => & $data)
 		{
 			Model_Droplet::populate_metadata($data['drops'], $data['account_id']);
 			
-			// Exclude drops that don't have place tags
+			// Set the location to be used for mapping the drop
 			foreach ($data['drops'] as $k => & $drop)
 			{
-				if (empty($drop['places']))
-				{
-					if ( ! array_key_exists($bucket_id, $no_place_tags))
-					{
-						$no_place_tags[$bucket_id] = array();
-					}
-					
-					$no_place_tags[$bucket_id][] = $drop['id'];
-					unset ($data['drops'][$k]);
-				}
-				else
+				if ( ! empty($drop['places']))
 				{
 					$place = $drop['places'][0];
 					$drop['place_hash'] = $place['place_hash'];
@@ -195,52 +182,6 @@ class Model_Deployment_Push_Log extends ORM {
 					$drop['longitude'] = $place['longitude'];
 				}
 			}
-		}
-
-		// Mark the drops without place tags as pushed
-		if ( ! empty($no_place_tags))
-		{
-			// Log
-			Kohana::$log->add(Log::INFO, "Found :count buckets with drops that have no place tags",
-			    array(":count" => count(array_keys($no_place_tags))));
-
-			// Update the pending_drop_count for each bucket in $no_place_tags
-			$drop_count_query = array();
-			$push_log_query = array();
-
-			foreach ($no_place_tags as $bucket_id => $drop_ids)
-			{
-				$query = sprintf("SELECT %d AS bucket_id, %d AS drop_count", $bucket_id, count($drop_ids));
-				$drop_count_query[] = $query;
-				foreach ($drop_ids as $drop_id)
-				{
-					$push_log_query[] = sprintf("SELECT %d AS `bucket_id`, %d AS `droplet_id`", $bucket_id, $drop_id);
-				}
-			}
-
-			// Update the push log
-			$log_update_query = "UPDATE `deployment_push_logs` AS a JOIN (%s) AS b "
-			    . "ON b.bucket_id = a.bucket_id "
-			    . "SET droplet_push_status = 1, "
-			    . "a.droplet_date_push = '%s' "
-			    . "WHERE a.droplet_id = b.droplet_id";
-
-			// Log
-			Kohana::$log->add(Log::INFO, "Marking drops without place tags as pushed");
-
-			$log_update_query = sprintf($log_update_query, implode("UNION ALL ", $push_log_query), gmdate("Y-m-d H:i:s"));
-			DB::query(Database::UPDATE, $log_update_query)->execute();
-
-			// Update the pending drop count
-			$count_update_query = "UPDATE `deployment_push_settings` AS a JOIN (%s) AS b "
-			    . "ON b.bucket_id = a.bucket_id "
-			    . "SET a.pending_drop_count = (a.pending_drop_count - b.drop_count)";
-
-			// Log
-			Kohana::$log->add(Log::INFO, "Updating the drop count");
-
-			$count_update_query = sprintf($count_update_query, implode("UNION ALL ", $drop_count_query));
-			DB::query(Database::UPDATE, $count_update_query)->execute();
 		}
 
 		return $pending_drops;
