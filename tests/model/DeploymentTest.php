@@ -24,10 +24,10 @@ class Model_DeploymentTest extends Unittest_TestCase {
 				
 				//  $data
 				array(
-					"deployment_url" => "http://stable.ushahidi.com",
-					"depliyment_name" => "Stable Release",
-					"client_id" => "",
-					"client_secret" => ""
+					"deployment_url" => "http://ushahidi.dev",
+					"deployment_name" => "Local Ushahidi Dev",
+					"client_id" => "xyz-Abcd123",
+					"client_secret" => "fc099uid-P19azwe74d"
 				)
 			)
 		);

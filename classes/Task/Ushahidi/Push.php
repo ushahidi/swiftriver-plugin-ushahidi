@@ -19,7 +19,8 @@ class Task_Ushahidi_Push extends Minion_Task {
 		try 
 		{
 			Swiftriver_Mutex::obtain(get_class());
-		} catch (SwiftRiver_Exception_Mutex $e) 
+		}
+		catch (SwiftRiver_Exception_Mutex $e) 
 		{
 			Kohana::$log->add(Log::ERROR, "Unable to obtain mutex");
 			exit;
@@ -122,7 +123,7 @@ class Task_Ushahidi_Push extends Minion_Task {
 		    . "a.droplet_date_push = '%s' "
 		    . "WHERE a.droplet_id = b.droplet_id";
 
-		$log_update_query = sprintf($log_update_query, implode("UNION ALL ", $push_log_query), gmdate("Y-m-d H:i:s"));
+		$log_update_query = sprintf($log_update_query, implode(" UNION ALL ", $push_log_query), gmdate("Y-m-d H:i:s"));
 		DB::query(Database::UPDATE, $log_update_query)->execute();
 
 		// Update the pending drop count
@@ -131,7 +132,7 @@ class Task_Ushahidi_Push extends Minion_Task {
 		    . "SET a.pending_drop_count = a.pending_drop_count - b.posted_drop_count "
 		    . "WHERE a.pending_drop_count > 0";
 	
-		$count_update_query = sprintf($count_update_query, implode("UNION ALL ", $drop_count_query));
+		$count_update_query = sprintf($count_update_query, implode(" UNION ALL ", $drop_count_query));
 		DB::query(Database::UPDATE, $count_update_query)->execute();
 
 		// Cleanup

@@ -31,7 +31,7 @@ class Model_Deployment_Push_LogTest extends Unittest_TestCase {
 	 * @dataProvider provider_add_entry
 	 * @covers Model_Deployment_Push_Log::add_entry
 	 */
-	public function test_add_entry($data)
+	public function test_add_entry($entry)
 	{
 		// Load the push settings for the bucket
 		$push_settings = Model_Deployment_Push_Setting::get_settings($entry['bucket_id']);
@@ -82,6 +82,6 @@ class Model_Deployment_Push_LogTest extends Unittest_TestCase {
 		
 		// Verify that pending drop count has reduced
 		$push_settings->reload();
-		$this->asserEquals(($push_settings - 1), $push_settings->pending_drop_count);
+		$this->assertEquals(($pending_count - 1), $push_settings->pending_drop_count);
 	}
 }
